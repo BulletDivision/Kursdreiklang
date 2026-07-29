@@ -42,7 +42,14 @@ header p{margin:8px 0 0;color:var(--mut);font-size:13px;max-width:46em}
 .rows{margin:6px 0 0}
 .row{border-bottom:1px solid var(--rule);padding:13px 2px}
 .row:last-child{border-bottom:0}
-.rhead{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:baseline;cursor:pointer}
+.rtop{display:grid;grid-template-columns:1fr auto;gap:6px;align-items:start}
+.rhead{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:baseline;cursor:pointer;min-width:0}
+.rx{flex:none;align-self:start;margin-top:-2px;padding:4px 9px;font-size:17px;line-height:1.1;
+  background:transparent;border:1px solid transparent;border-radius:8px;color:var(--mut)}
+@media(hover:hover){.rx:hover{color:var(--fail);border-color:rgba(242,99,126,.4)}}
+.rx:focus-visible{outline:2px solid var(--fail);outline-offset:2px}
+.undo{background:transparent;border:0;padding:0 0 0 8px;color:var(--bar);
+  text-decoration:underline;font-size:12.5px;cursor:pointer}
 .rhead:focus-visible{outline:2px solid var(--bar);outline-offset:3px;border-radius:6px}
 .rname{font-weight:600;min-width:0;overflow-wrap:anywhere}
 .rname .tag{font-family:var(--mono);font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;
@@ -189,6 +196,7 @@ const MAXWIN=10;              /* Vergleichsfenster hoechstens 10 Jahre */
 /* Titel: name -> {rows:[{d,c}], kind:'etf'|'aktie', exp:null|Zahl, note:'', noteDate:''} */
 let T=new Map();
 let OPEN=null;
+let UNDO=null;        /* zuletzt entfernter Titel, fuer das Rueckgaengig */
 let EXP_RAW=null;      /* was gerade im Erwartungsfeld steht, solange getippt wird */
 const numDE=t=>{ t=String(t).trim().replace(',','.'); const v=parseFloat(t); return isNaN(v)?null:v; };
 let CFG={margin:1, hold:5, amount:1000};
@@ -201,6 +209,18 @@ const eur=v=>nf2.format(v)+'\u2009\u20AC';
 const esc=s=>String(s).replace(/[<>&]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;'}[c]));
 const $=id=>document.getElementById(id);
 function say(t,bad){ const m=$('msg'); m.textContent=t||''; m.classList.toggle('bad',!!bad); }
+function sayUndo(){
+  const m=$('msg'); m.classList.remove('bad');
+  m.innerHTML='Entfernt: '+esc(UNDO.name)
+    + (UNDO.wasCore? ' \u2013 das war dein Core-ETF, die H\u00fcrde f\u00e4llt damit weg.' : '')
+    + '<button class="undo" id="undoBtn">R\u00fcckg\u00e4ngig</button>';
+  const b=document.getElementById('undoBtn');
+  if(b) b.onclick=function(){
+    if(!UNDO) return;
+    T.set(UNDO.name, UNDO.entry); UNDO=null;
+    save(); render(); say('Wiederhergestellt.');
+  };
+}
 
 /* ---------- ING-CSV ---------- */
 /* Uebernommen aus der grossen App: Spalte 0 Datum, Spalte 1 Schlusskurs,
@@ -491,11 +511,15 @@ function render(){
            + (r.deltaLong!=null && (r.delta>=0)!==(r.deltaLong>=0)
               ? ' \u00b7 kippt im langen Fenster' : '');
     return '<div class="row">'
-      + '<div class="rhead" role="button" tabindex="0" data-open="'+esc(r.name)+'" aria-expanded="'+open+'">'
-      +   '<div><div class="rname">'+esc(r.name)
-      +     (r.core?'<span class="tag core">Core</span>':'<span class="tag">'+(r.kind==='etf'?'ETF':'Aktie')+'</span>')
-      +     '</div><div class="rsub">'+sub+'</div></div>'
-      +   '<div class="rdelta '+cls+'">'+val+'</div>'
+      + '<div class="rtop">'
+      +   '<div class="rhead" role="button" tabindex="0" data-open="'+esc(r.name)+'" aria-expanded="'+open+'">'
+      +     '<div><div class="rname">'+esc(r.name)
+      +       (r.core?'<span class="tag core">Core</span>':'<span class="tag">'+(r.kind==='etf'?'ETF':'Aktie')+'</span>')
+      +       '</div><div class="rsub">'+sub+'</div></div>'
+      +     '<div class="rdelta '+cls+'">'+val+'</div>'
+      +   '</div>'
+      +   '<button class="rx" data-del="'+esc(r.name)+'" title="Titel entfernen" '
+      +     'aria-label="'+esc(r.name)+' entfernen">\u00d7</button>'
       + '</div>'
       + (r.core? '' : axisHtml(r.delta))
       + (open? detailHtml(r) : '')
@@ -546,7 +570,6 @@ function detailHtml(r){
     + '<div class="bar">'
     +   '<button class="mini" data-note="'+esc(r.name)+'">'+(hasNote?'Notiz bearbeiten':'Notiz schreiben')+'</button>'
     +   (r.exp!=null && r.manual? '<button class="mini" data-reset="'+esc(r.name)+'">Auf historisch zur\u00fccksetzen</button>':'')
-    +   '<button class="mini" data-del="'+esc(r.name)+'">Titel entfernen</button>'
     + '</div></div>';
 }
 
@@ -644,10 +667,15 @@ function bind(){
     const t=T.get(this.dataset.reset); if(!t) return;
     t.exp=null; save(); render();
   });
-  document.querySelectorAll('[data-del]').forEach(b=>b.onclick=function(){
-    const n=this.dataset.del;
-    if(!confirm('\u201e'+n+'\u201c entfernen?')) return;
-    T.delete(n); if(OPEN===n) OPEN=null; save(); render(); say('Entfernt: '+n);
+  /* Kein Bestaetigungsdialog: schnelles Ausduennen ist der Zweck.
+     Sicherheitsnetz ist stattdessen ein Rueckgaengig in der Meldezeile. */
+  document.querySelectorAll('[data-del]').forEach(b=>b.onclick=function(ev){
+    ev.stopPropagation();
+    const n=this.dataset.del, entry=T.get(n);
+    if(!entry) return;
+    UNDO={name:n, entry:entry, wasCore:(coreName()===n)};
+    T.delete(n); if(OPEN===n) OPEN=null;
+    save(); render(); sayUndo();
   });
 }
 /* Erwartungsfeld: komplett neu zeichnen und den Fokus samt Cursor
