@@ -1,0 +1,1219 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#12161F">
+<title>Kursdreiklang &amp; Handelsbuch</title>
+<style>
+:root{
+  --ink:#12161F; --panel:#1A2029; --panel2:#212936; --rule:#2A3341;
+  --tx:#E6EAF2; --mut:#8A94A6; --pass:#4ED8A0; --fail:#F2637E; --bar:#F0B429;
+  --cool:#6C7A90; --vio:#9B8CFF;
+  --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,monospace;
+  --sans:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{background:var(--ink);color:var(--tx);font-family:var(--sans);font-size:15px;line-height:1.5;
+  -webkit-text-size-adjust:100%;padding:0 14px calc(40px + env(safe-area-inset-bottom))}
+.wrap{max-width:860px;margin:0 auto}
+header{padding:20px 0 0}
+.eyebrow{font-family:var(--mono);font-size:10.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--mut)}
+h1{font-size:20px;line-height:1.2;margin:2px 0 0;font-weight:650;letter-spacing:-.01em}
+
+/* Reiter */
+.tabs{display:flex;gap:4px;margin:16px 0 0;border-bottom:1px solid var(--rule)}
+.tab{font:inherit;font-size:14px;background:transparent;border:0;border-bottom:2px solid transparent;
+  color:var(--mut);padding:10px 14px;cursor:pointer;font-weight:600}
+.tab.on{color:var(--bar);border-bottom-color:var(--bar)}
+@media(hover:hover){.tab:hover{color:var(--tx)}}
+.tab:focus-visible{outline:2px solid var(--bar);outline-offset:-2px;border-radius:6px}
+
+.card{background:var(--panel);border:1px solid var(--rule);border-radius:13px;padding:15px;margin:14px 0}
+.card.dash{border-style:dashed}
+h4{margin:0 0 10px;font-family:var(--mono);font-size:10px;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--mut);font-weight:600;display:flex;
+  justify-content:space-between;align-items:center;gap:10px}
+
+/* Erklaerknopf */
+.info{flex:none;width:19px;height:19px;border-radius:50%;border:1px solid var(--rule);
+  background:transparent;color:var(--mut);font-family:var(--sans);font-size:11px;font-weight:700;
+  line-height:1;padding:0;cursor:pointer;letter-spacing:0}
+@media(hover:hover){.info:hover{color:var(--bar);border-color:var(--bar)}}
+.info:focus-visible{outline:2px solid var(--bar);outline-offset:2px}
+label.f .info{margin-left:5px;vertical-align:-3px}
+
+/* Popup */
+.ovl{position:fixed;inset:0;background:rgba(8,11,16,.72);display:none;z-index:50;
+  align-items:center;justify-content:center;padding:18px}
+.ovl.on{display:flex}
+.modal{background:var(--panel);border:1px solid var(--rule);border-radius:15px;max-width:520px;
+  width:100%;max-height:82vh;overflow:auto;padding:20px}
+.modal h3{margin:0 0 3px;font-size:17px;font-weight:650}
+.modal .fx{font-family:var(--mono);font-size:11px;color:var(--bar);letter-spacing:.06em;margin-bottom:12px}
+.modal p{margin:0 0 11px;font-size:14px;line-height:1.55}
+.modal p:last-of-type{margin-bottom:0}
+.modal .warn{background:rgba(240,180,41,.09);border:1px solid rgba(240,180,41,.3);
+  border-radius:9px;padding:11px 13px;color:#F5D48A;font-size:13px;margin:12px 0 0}
+.modal .bar{margin-top:16px}
+
+.kv{font-family:var(--mono);font-size:12.5px}
+.kv div{display:flex;justify-content:space-between;gap:12px;padding:3px 0;align-items:baseline}
+.kv div>span:last-child{white-space:nowrap;text-align:right}
+.kv .tot{border-top:1px solid var(--rule);margin-top:6px;padding-top:7px;font-weight:600}
+.pass{color:var(--pass)} .fail{color:var(--fail)} .dim{color:var(--mut)} .gold{color:var(--bar)}
+.sub{font-family:var(--mono);font-size:11.5px;color:var(--mut);margin-top:6px;line-height:1.5}
+
+/* Analyse */
+.duo{display:grid;grid-template-columns:1fr 1fr;gap:13px}
+@media(max-width:560px){.duo{grid-template-columns:1fr}}
+.gauge{background:var(--panel2);border:1px solid var(--rule);border-radius:11px;padding:13px}
+.bignum{font-family:var(--mono);font-size:36px;font-weight:600;letter-spacing:-.03em;line-height:.95}
+.bignum small{font-size:13px;color:var(--mut);letter-spacing:0;margin-left:3px}
+.seg{display:flex;gap:3px;height:19px;margin-top:9px}
+.seg i{flex:1;border-radius:2px;background:#161B24;border:1px solid var(--rule)}
+.seg i.on{border-color:transparent}
+.gauge .lab{font-size:13px;margin-top:8px;font-weight:600}
+.chartbox{position:relative;margin-top:6px;border:1px solid var(--rule);border-radius:11px;
+  overflow:hidden;background:#141922;touch-action:none;cursor:crosshair}
+.chartbox svg{display:block;width:100%}
+.ctrl{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.chip{font-family:var(--mono);font-size:11.5px;padding:5px 10px;border-radius:999px;
+  background:transparent;border:1px solid var(--rule);color:var(--mut);cursor:pointer}
+@media(hover:hover){.chip:hover{color:var(--tx);border-color:var(--mut)}}
+.legend{display:flex;gap:11px;flex-wrap:wrap;font-family:var(--mono);font-size:10px;
+  letter-spacing:.06em;text-transform:uppercase;color:var(--mut);margin-top:7px}
+.legend i{display:inline-block;width:12px;height:2px;vertical-align:middle;margin-right:5px;border-radius:1px}
+.row{border-bottom:1px solid var(--rule);padding:11px 2px;display:grid;
+  grid-template-columns:1fr auto auto auto;gap:10px;align-items:center;cursor:pointer}
+.row:last-child{border-bottom:0}
+.row.sel{background:rgba(240,180,41,.06);border-radius:8px;padding-left:8px;padding-right:8px}
+.row .nm{font-weight:600;min-width:0;overflow-wrap:anywhere}
+.row .mt{font-family:var(--mono);font-size:11px;color:var(--mut);margin-top:2px}
+.row .sc{font-family:var(--mono);font-size:17px;font-weight:600;text-align:right}
+.row .sc em{display:block;font-style:normal;font-size:9px;letter-spacing:.1em;color:var(--mut);text-transform:uppercase}
+.rx{padding:3px 8px;font-size:16px;background:transparent;border:1px solid transparent;
+  border-radius:7px;color:var(--mut);cursor:pointer;line-height:1.1}
+@media(hover:hover){.rx:hover{color:var(--fail);border-color:rgba(242,99,126,.4)}}
+
+/* Handelsbuch */
+.pos{border:1px solid var(--rule);border-radius:11px;padding:13px;margin-bottom:11px;background:var(--panel2)}
+.pos:last-child{margin-bottom:0}
+.pos .top{display:flex;justify-content:space-between;gap:10px;align-items:baseline}
+.pos .nm{font-weight:650;font-size:16px}
+.pos .pl{font-family:var(--mono);font-size:20px;font-weight:600}
+.spark{margin:10px 0 2px;height:46px}
+.spark svg{display:block;width:100%;height:46px}
+.done{font-family:var(--mono);font-size:12px;border-bottom:1px solid var(--rule);padding:8px 0}
+.done:last-child{border-bottom:0}
+.done .r1{display:flex;justify-content:space-between;gap:10px}
+.done .r2{color:var(--mut);font-size:11px;margin-top:2px}
+
+.fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:11px}
+label.f{display:block;font-family:var(--mono);font-size:10px;letter-spacing:.12em;
+  text-transform:uppercase;color:var(--mut);margin-bottom:4px}
+input,textarea,select{width:100%;background:var(--ink);color:var(--tx);border:1px solid var(--rule);
+  border-radius:8px;padding:8px 9px;font-family:var(--mono);font-size:14px}
+textarea{font-family:var(--sans);min-height:66px;resize:vertical}
+input:focus,textarea:focus,select:focus{outline:2px solid var(--bar);outline-offset:1px}
+
+.flag{margin-top:11px;padding:10px 12px;border-radius:9px;font-size:12.5px;line-height:1.5}
+.flag.warn{background:rgba(240,180,41,.10);border:1px solid rgba(240,180,41,.35);color:#F5D48A}
+.flag.bad{background:rgba(242,99,126,.10);border:1px solid rgba(242,99,126,.35);color:#F7A9BA}
+.flag.good{background:rgba(78,216,160,.09);border:1px solid rgba(78,216,160,.32);color:#9BE9C8}
+
+.bar{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0 0}
+button.b{font:inherit;font-size:13.5px;background:var(--panel2);color:var(--tx);
+  border:1px solid var(--rule);border-radius:9px;padding:9px 13px;cursor:pointer}
+button.b.go{background:var(--bar);border-color:var(--bar);color:#1B1403;font-weight:650}
+button.b.mini{font-size:12px;padding:6px 10px}
+@media(hover:hover){button.b:hover{border-color:var(--mut)}button.b.go:hover{filter:brightness(1.07)}}
+button.b:focus-visible{outline:2px solid var(--bar);outline-offset:2px}
+.msg{margin-top:9px;font-size:12.5px;color:var(--mut);min-height:1.2em}
+.msg.bad{color:var(--fail)}
+details.card{padding:0}
+details.card>summary{list-style:none;cursor:pointer;padding:14px 15px;font-family:var(--mono);
+  font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--mut);font-weight:600;
+  display:flex;justify-content:space-between}
+details.card>summary::-webkit-details-marker{display:none}
+details.card>summary::after{content:"+";font-size:15px;letter-spacing:0}
+details.card[open]>summary::after{content:"\2013"}
+details.card .inner{padding:0 15px 15px}
+footer{margin-top:24px;padding-top:13px;border-top:1px solid var(--rule);font-size:12px;color:var(--mut)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <div class="eyebrow">Kursdreiklang</div>
+  <h1>Analyse und Handelsbuch</h1>
+  <div class="tabs">
+    <button class="tab on" id="tA">Analyse</button>
+    <button class="tab" id="tB">Handelsbuch</button>
+  </div>
+</header>
+
+<div class="bar">
+  <button class="b go" id="bCsv">Kursdateien laden</button>
+  <button class="b" id="bSave">Sichern</button>
+  <button class="b" id="bLoad">Laden</button>
+  <button class="b" id="bPrompt">Text f&uuml;r die KI</button>
+  <button class="b" id="bHelp">Was macht das hier?</button>
+</div>
+<div class="msg" id="msg"></div>
+
+<div id="viewA"></div>
+<div id="viewB"></div>
+
+<div class="card" id="settings" style="display:none">
+  <h4>Einstellungen <button class="info" data-info="einstellungen" aria-label="Erkl&auml;rung">i</button></h4>
+  <div class="fields">
+    <div><label class="f" for="cAmount">Einsatz je Trade (&euro;)</label>
+      <input type="number" id="cAmount" step="50" min="0" value="1000"></div>
+    <div><label class="f" for="cDepot">Depotwert gesamt (&euro;)</label>
+      <input type="number" id="cDepot" step="500" min="0" value=""></div>
+    <div><label class="f" for="cSparDate">N&auml;chster Sparplan
+      <button class="info" data-info="sparplan" aria-label="Erkl&auml;rung">i</button></label>
+      <input type="date" id="cSparDate"></div>
+    <div><label class="f" for="cStopK">Stop-Faktor
+      <button class="info" data-info="stopk" aria-label="Erkl&auml;rung">i</button></label>
+      <input type="number" id="cStopK" step="0.05" min="0.3" max="2" value="0.8"></div>
+    <div><label class="f" for="cThresh">Einstiegsschwelle Trend
+      <button class="info" data-info="thresh" aria-label="Erkl&auml;rung">i</button></label>
+      <input type="number" id="cThresh" step="0.5" min="0" max="10" value="6"></div>
+    <div><label class="f" for="cTimeMin">Timing mindestens
+      <button class="info" data-info="timemin" aria-label="Erkl&auml;rung">i</button></label>
+      <input type="number" id="cTimeMin" step="0.5" min="0" max="10" value="4"></div>
+  </div>
+  <div class="fields" style="margin-top:11px">
+    <div><label class="f" for="cFeeBase">Grundgeb&uuml;hr (&euro;)</label>
+      <input type="number" id="cFeeBase" step="0.1" min="0" value="4.90"></div>
+    <div><label class="f" for="cFeePct">Variabel (%)</label>
+      <input type="number" id="cFeePct" step="0.05" min="0" value="0.25"></div>
+    <div><label class="f" for="cFeeCap">Deckel (&euro;)</label>
+      <input type="number" id="cFeeCap" step="1" min="0" value="69.90"></div>
+    <div><label class="f" for="cSparPct">Aktien-Sparplan (%)</label>
+      <input type="number" id="cSparPct" step="0.05" min="0" value="1.50"></div>
+  </div>
+  <div class="sub">Geb&uuml;hren nach ING-Konditionen voreingestellt &ndash; pr&uuml;f sie gegen deinen Preisaushang.</div>
+</div>
+
+<footer>
+  Alles rechnet im Browser, nichts verl&auml;sst das Ger&auml;t. Trend und Timing beschreiben den
+  Chart, nicht das Unternehmen. Steuer pauschal mit 26,375&thinsp;% gen&auml;hert, ohne
+  Sparerpauschbetrag. Keine Anlageberatung.
+</footer>
+</div>
+
+<div class="ovl" id="ovl"><div class="modal" id="modal"></div></div>
+<input type="file" id="fCsv" accept=".csv" multiple hidden>
+<input type="file" id="fJson" accept=".json" hidden>
+
+<script>
+/* =========================================================
+   Zwei Werkzeuge, eine Datenbasis.
+   Analyse liest den Chart. Handelsbuch misst dich.
+   ========================================================= */
+const KEY='dreiklang_buch_v1';
+const DAY=864e5, TAX=0.26375;
+
+let PX=new Map();     /* Titel -> {rows,_key} */
+let TR=[];            /* Trades */
+let CFG={amount:1000,depot:null,sparDate:'',stopK:0.8,thresh:6,timeMin:4,
+         feeBase:4.90,feePct:0.25,feeCap:69.90,sparPct:1.50};
+let TAB='A', SEL=null, VIEW=null, HOVER=null, FORM=false, STOPTOUCHED=false;
+const CACHE=new Map();
+
+const nf=new Intl.NumberFormat('de-DE',{minimumFractionDigits:1,maximumFractionDigits:1});
+const nf2=new Intl.NumberFormat('de-DE',{minimumFractionDigits:2,maximumFractionDigits:2});
+const nf0=new Intl.NumberFormat('de-DE',{maximumFractionDigits:0});
+const sgn=v=>v==null?'\u2013':(v>=0?'+':'\u2212')+nf.format(Math.abs(v));
+const eur=v=>v==null?'\u2013':nf2.format(v)+'\u2009\u20AC';
+const esc=s=>String(s==null?'':s).replace(/[<>&"]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c]));
+const $=id=>document.getElementById(id);
+const val=id=>{const e=$(id);return e?e.value:'';};
+const numOf=v=>{const x=parseFloat(String(v).replace(',','.'));return isNaN(x)?null:x;};
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+function say(t,bad){const m=$('msg');m.textContent=t||'';m.classList.toggle('bad',!!bad);}
+const today=()=>{const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')
+  +'-'+String(d.getDate()).padStart(2,'0');};
+
+/* ---------- Erklaerungen ---------- */
+const INFO={
+ einstellungen:{t:'Die Einstellungen',f:'Was hier gedreht wird',
+  p:['Die oberen vier Felder steuern die Analyse, die unteren vier deine Geb&uuml;hren. '
+    +'Einsatz und Depotwert dienen nur der Rechnung &ndash; das Werkzeug kauft nichts.',
+    'Die drei Regler daneben (Stop-Faktor, Einstiegsschwelle, Timing) stammen aus einem Versuch, '
+    +'aus dem Chart Kauf- und Verkaufssignale abzuleiten. Jeder hat sein eigenes Erkl&auml;rfeld.'],
+  w:'Wir haben diese Regler an sieben Titeln &uuml;ber bis zu 19 Jahre durchgerechnet. Ergebnis: '
+    +'Aus der Stichprobe heraus schlug die Regel den Zufall nicht. Die Regler sind zum Ausprobieren da, '
+    +'nicht als System.'},
+ stopk:{t:'Stop-Faktor',f:'Abstand = Faktor \u00d7 Jahresschwankung, begrenzt auf 10 bis 30\u2009%',
+  p:['Ein fester Prozentwert taugt nicht f&uuml;r alle Titel. Ein ruhiger Wert schwankt im Jahr '
+    +'15\u2009%, ein wilder 40\u2009% &ndash; derselbe Stop w&auml;re einmal zu weit und einmal viel zu eng.',
+    'Deshalb h&auml;ngt der Abstand an der gemessenen Schwankung des Titels. Bei Faktor 0,8 bekommt '
+    +'ein Titel mit 41\u2009% Schwankung rund 30\u2009% Abstand, einer mit 20\u2009% nur 16\u2009%.',
+    'Kleinerer Faktor hei&szlig;t engerer Stop: kleinere Einzelverluste, aber du fliegst &ouml;fter '
+    +'raus &ndash; jedes Mal mit vollen Geb&uuml;hren.'],
+  w:'Ein Stop begrenzt den Schaden. Er steigert nicht die Rendite &ndash; im Gegenteil, er kappt '
+    +'auch Erholungen. Und bei einer Er&ouml;ffnungsl&uuml;cke wirst du unter deinem Limit bedient.'},
+ thresh:{t:'Einstiegsschwelle Trend',f:'Ab welchem Trendwert die Regel kaufen w&uuml;rde',
+  p:['Der Trendwert geht von 0 bis 10 und beschreibt, wie sauber Kurs, 50er und 200er '
+    +'zueinander stehen. Die Schwelle sagt, ab wann das als Kaufsignal z&auml;hlt.',
+    'Sie wirkt nur im R&uuml;ckblick unten &ndash; sie l&ouml;st nichts aus. H&ouml;here Schwelle '
+    +'bedeutet weniger, aber sp&auml;tere Signale.'],
+  w:'Im Test lag das beste Ergebnis im R&uuml;ckblick bei +16,8\u2009% je Trade, aus der Stichprobe '
+    +'heraus nur bei +3,7\u2009% &ndash; und zuf&auml;lliges Kaufen brachte +5,3\u2009%. Die Differenz '
+    +'von 14,7 Punkten ist reiner Selbstbetrug durch die Parametersuche.'},
+ timemin:{t:'Timing mindestens',f:'Filter aus RSI und Abstand zur 50er',
+  p:['Der Timingwert sollte hohe Werte geben, wenn ein Titel ruhig an seiner 50er liegt, und '
+    +'niedrige, wenn er weit dar&uuml;ber steht und der RSI hoch ist. Die Idee: nicht in eine '
+    +'gelaufene Bewegung hineinkaufen.'],
+  w:'Die Idee war falsch herum. &Uuml;ber 21.000 gepr&uuml;fte Einstiege brachten Tage mit Timing '
+    +'0\u20132 (\u201eh\u00ee&szlig; gelaufen\u201c) im Schnitt +8,6\u2009%, Tage mit Timing 8\u201310 '
+    +'(\u201eruhig\u201c) nur +2,4\u2009%. Auf Haltedauern von Monaten war Kaufen in die St&auml;rke '
+    +'besser. Setz den Filter auf 0, wenn du ihn nicht willst.'},
+ trend:{t:'Trend 0 bis 10',f:'Lage und Richtung der drei Linien',
+  p:['Setzt sich zusammen aus: wie weit die 50er &uuml;ber oder unter der 200er liegt, wie weit '
+    +'der Kurs &uuml;ber der 200er steht, wie steil beide Linien gerade laufen, und ob k&uuml;rzlich '
+    +'ein Golden oder Death Cross war (das klingt &uuml;ber etwa sieben Wochen ab).',
+    'Hohe Werte hei&szlig;en: geordneter Aufw&auml;rtstrend. Niedrige: Abw&auml;rts oder Chaos.'],
+  w:'Hohe Trendwerte sahen im Test nach besseren Renditen aus &ndash; das war aber ein Auswahleffekt. '
+    +'Innerhalb ein und desselben Titels gemessen verschwand der Vorteil bei 5 von 7 Titeln. '
+    +'Gute Aktien verbringen nur mehr Zeit im Aufw&auml;rtstrend.'},
+ timing:{t:'Timing 0 bis 10',f:'RSI und Abstand zur 50er, in Schwankungen gemessen',
+  p:['Hohe Werte: RSI niedrig, Kurs nahe der 50er. Niedrige Werte: RSI hoch, Kurs weit dar&uuml;ber.',
+    'Der Abstand wird nicht in Prozent gerechnet, sondern in Vielfachen der normalen Schwankung '
+    +'des Titels &ndash; 10\u2009% &uuml;ber der 50er bedeuten bei einem ruhigen Wert viel mehr als '
+    +'bei einem wilden.'],
+  w:'Die R&uuml;ckrechnung sagt, dass der Wert verkehrt herum wirkt. Lies ihn als Beschreibung, '
+    +'nicht als Empfehlung.'},
+ potenzial:{t:'Potenzial',f:'Abstand zum Hoch der letzten zwei Jahre, ged\u00e4mpft',
+  p:['Gemessen wird, wie weit der Kurs unter seinem H&ouml;chststand der letzten rund zwei Jahre '
+    +'liegt. Davon werden nur 55\u2009% angesetzt, gedeckelt bei 60\u2009%.',
+    'Die D&auml;mpfung ist Absicht: Ohne sie w&uuml;rde immer der tiefste Absturz das gr&ouml;&szlig;te '
+    +'Potenzial zeigen &ndash; und der ist meist am unsichersten.'],
+  w:'Ein altes Hoch ist kein Kursziel. Es sagt nur, dass der Markt diesen Preis einmal bezahlt hat, '
+    +'unter Bedingungen, die es vielleicht nicht mehr gibt.'},
+ rueckblick:{t:'Der R\u00fcckblick',f:'Die Regel auf die eigene Vergangenheit angewandt',
+  p:['Hier l&auml;uft die Einstiegsregel durch die gesamte Historie dieses Titels: Signal abwarten, '
+    +'kaufen, mit dem Stop mitlaufen, bei Stop oder Death Cross verkaufen. Geb&uuml;hren und Steuer '
+    +'sind eingerechnet.',
+    'Verglichen wird gegen einfaches Liegenlassen im selben Zeitraum.'],
+  w:'Bei drei bis f&uuml;nf Signalen je Titel ist das eine Notiz, kein Beweis. Und wer die Regler '
+    +'so lange dreht, bis die Zahl gef&auml;llt, hat nur die Vergangenheit nachgezeichnet.'},
+ sparplan:{t:'Direktkauf oder Sparplan',f:'Grundgeb\u00fchr gegen Prozentgeb\u00fchr',
+  p:['Der Direktkauf kostet eine feste Grundgeb&uuml;hr plus einen kleinen Prozentsatz. Der Sparplan '
+    +'kostet nur Prozente. Also ist der Sparplan bei kleinen Betr&auml;gen billiger und der Direktkauf '
+    +'bei gro&szlig;en. Mit den Standardwerten liegt der Gleichstand bei rund 392\u2009&euro;.',
+    'Tr&auml;gst du oben ein Ausf&uuml;hrungsdatum ein, stellt das Werkzeug die gesparte Geb&uuml;hr '
+    +'der Kursbewegung bis dahin gegen&uuml;ber.'],
+  w:'Verkaufen geht nie &uuml;ber den Sparplan. Die R&uuml;ckfahrt kostet also in jedem Fall die '
+    +'volle Direktgeb&uuml;hr.'},
+ nullinie:{t:'Die Nulllinie',f:'Was der Kurs steigen muss, damit nichts \u00fcbrig bleibt',
+  p:['Zwei Geb&uuml;hren, einmal beim Kauf und einmal beim Verkauf, plus 26,375\u2009% Steuer auf '
+    +'den Gewinn. Bei 1.000\u2009&euro; Einsatz muss der Kurs rund 2\u2009% steigen, damit du bei '
+    +'null herauskommst.',
+    'Bei kleineren Betr&auml;gen wird es schnell viel: Die feste Grundgeb&uuml;hr wiegt bei '
+    +'300\u2009&euro; dreimal so schwer wie bei 1.000\u2009&euro;.'],
+  w:'Diese Schwelle f&auml;llt bei jedem Kauf neu an. Vier Trades im Jahr kosten dich rund 6\u2009% '
+    +'Rendite, bevor irgendetwas passiert ist.'},
+ bilanz:{t:'Deine Bilanz',f:'Misst dich, nicht den Markt',
+  p:['Die Analyse pr&uuml;ft, ob der Chart etwas wei&szlig;. Diese Bilanz pr&uuml;ft etwas anderes: '
+    +'ob <em>dein Urteil</em> etwas wei&szlig;.',
+    'Dazu vergleicht sie, was du beim Kauf erwartet hast, mit dem, was gekommen ist. Sie zeigt, ob du '
+    +'systematisch zu optimistisch sch&auml;tzt und um wie viel. Und sie schaut, ob die Trades, bei '
+    +'denen du dir sicher warst, besser liefen als die anderen.',
+    'Genau das ist die Frage, die wir mit Kursdaten nicht beantworten konnten.'],
+  w:'Unter 20 abgeschlossenen Trades entscheidet das Gl&uuml;ck. Die Streuung eines einzelnen Trades '
+    +'liegt bei rund 23 Punkten &ndash; ein Vorteil von 2 Punkten br&auml;uchte &uuml;ber tausend '
+    +'Trades, um sich davon abzuheben.'},
+ hilfe:{t:'Was macht das hier?',f:'Zwei Werkzeuge, eine Datenbasis',
+  p:['<b>Analyse</b> liest deine ING-Kursdateien und beschreibt die Lage: wo der Kurs zu seinen '
+    +'beiden Durchschnittslinien steht, wie weit es zum alten Hoch ist, welcher Stop zur Schwankung '
+    +'passt, was Kauf und Verkauf kosten.',
+    '<b>Handelsbuch</b> ist das eigentliche Werkzeug. Vor dem Kauf notierst du deine These, dein '
+    +'Kursziel und wie sicher du dir bist. Es rechnet vor, was der Trade nach Geb&uuml;hren und '
+    +'Steuer bringen muss. Nach dem Verkauf vergleicht es Erwartung mit Ergebnis.',
+    'Beide teilen sich die geladenen Kursdateien. Alles bleibt lokal im Browser; sichere den Stand '
+    +'&uuml;ber den Knopf oben, sonst ist er beim Leeren des Browserspeichers weg.'],
+  w:'Die Signalregeln in der Analyse haben in unseren Tests den Zufall nicht geschlagen. Sie stehen '
+    +'als Beschreibung drin, nicht als Empfehlung. Die Erkl&auml;rfelder mit dem i sagen dir jeweils, '
+    +'was gepr&uuml;ft wurde.'}
+};
+function showInfo(k){
+  const d=INFO[k]; if(!d)return;
+  $('modal').innerHTML='<h3>'+d.t+'</h3><div class="fx">'+d.f+'</div>'
+   + d.p.map(x=>'<p>'+x+'</p>').join('')
+   + (d.w?'<div class="warn">'+d.w+'</div>':'')
+   + '<div class="bar"><button class="b go" id="mClose">Verstanden</button></div>';
+  $('ovl').classList.add('on');
+  const c=$('mClose'); if(c){c.onclick=hideInfo;c.focus();}
+}
+function hideInfo(){$('ovl').classList.remove('on');}
+$('ovl').onclick=e=>{if(e.target===$('ovl'))hideInfo();};
+document.addEventListener('keydown',e=>{if(e.key==='Escape')hideInfo();});
+document.addEventListener('click',e=>{
+  const b=e.target.closest?e.target.closest('[data-info]'):null;
+  if(b){e.preventDefault();e.stopPropagation();showInfo(b.dataset.info);}
+},true);
+
+/* ---------- CSV ---------- */
+function tsOfStr(s){
+  s=String(s).trim();
+  let m=s.match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})/); if(m)return Date.UTC(+m[3],+m[2]-1,+m[1]);
+  m=s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);       if(m)return Date.UTC(+m[1],+m[2]-1,+m[3]);
+  m=s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);     if(m)return Date.UTC(+m[3],+m[1]-1,+m[2]);
+  return NaN;
+}
+const fmtD =t=>{const d=new Date(t);return String(d.getUTCDate()).padStart(2,'0')+'.'
+  +String(d.getUTCMonth()+1).padStart(2,'0')+'.'+d.getUTCFullYear();};
+const fmtDs=t=>{const d=new Date(t);return String(d.getUTCDate()).padStart(2,'0')+'.'
+  +String(d.getUTCMonth()+1).padStart(2,'0')+'.'+String(d.getUTCFullYear()).slice(2);};
+function parseCSV(text){
+  const L=text.split(/\r?\n/).filter(l=>l.trim().length&&!/^sep=/i.test(l));
+  if(L.length<2)throw new Error('Datei sieht leer aus');
+  const h=L[0].split(';');
+  if(h.length<2)throw new Error('Spalten passen nicht zum ING-Export');
+  const name=h[1].replace(/\s*\((EUR|USD)\)/i,'').trim()||'Ohne Namen';
+  const col=re=>h.findIndex(x=>re.test(x));
+  const iV=col(/volumen/i),iR=col(/rsi/i),
+        i50=col(/durchschnitt\s*50|sma\s*50|gd\s*50/i),
+        i200=col(/durchschnitt\s*200|sma\s*200|gd\s*200/i);
+  const num=x=>{x=(x||'').trim().replace(/\./g,'').replace(',','.');const v=parseFloat(x);return isNaN(v)?null:v;};
+  const rows=[];
+  for(let i=1;i<L.length;i++){
+    const q=L[i].split(';'); if(q.length<2)continue;
+    const c=num(q[1]); if(c==null||!(c>0))continue;
+    const d=(q[0]||'').trim().slice(0,10);
+    if(isNaN(tsOfStr(d)))continue;
+    rows.push({d:d,c:c,v:iV>0?num(q[iV]):null,rsi:iR>0?num(q[iR]):null,
+      m50:i50>0?num(q[i50]):null,m200:i200>0?num(q[i200]):null});
+  }
+  if(!rows.length)throw new Error('Keine lesbaren Kurszeilen');
+  return {name:name,rows:rows,extras:{v:iV>0,rsi:iR>0,ma:i50>0&&i200>0}};
+}
+function readText(f){
+  const rd=enc=>new Promise((res,rej)=>{const r=new FileReader();
+    r.onload=e=>res(e.target.result);r.onerror=()=>rej(new Error('nicht lesbar'));r.readAsText(f,enc);});
+  return rd('utf-8').then(t=>t.slice(0,400).indexOf('\uFFFD')>=0?rd('windows-1252'):t);
+}
+function mergeRows(a,b){
+  const m=new Map();(a||[]).forEach(r=>m.set(r.d,r));b.forEach(r=>m.set(r.d,r));
+  return Array.from(m.values()).sort((x,y)=>tsOfStr(x.d)-tsOfStr(y.d));
+}
+
+/* ---------- Indikatoren ---------- */
+function sma(c,n){const o=new Array(c.length).fill(null);let s=0;
+  for(let i=0;i<c.length;i++){s+=c[i];if(i>=n)s-=c[i-n];if(i>=n-1)o[i]=s/n;}return o;}
+/* ING rechnet den RSI mit Periode 7, nicht mit den ueblichen 14 - nachgemessen. */
+function rsiCalc(c,n){
+  const o=new Array(c.length).fill(null);let ag=0,al=0;
+  for(let i=1;i<c.length;i++){
+    const ch=c[i]-c[i-1],g=Math.max(0,ch),l=Math.max(0,-ch);
+    if(i<=n){ag+=g/n;al+=l/n;if(i===n)o[i]=al===0?100:100-100/(1+ag/al);}
+    else{ag=(ag*(n-1)+g)/n;al=(al*(n-1)+l)/n;o[i]=al===0?100:100-100/(1+ag/al);}}
+  return o;
+}
+function rollVol(c,win){
+  const o=new Array(c.length).fill(null),lr=new Array(c.length).fill(0);
+  for(let i=1;i<c.length;i++)lr[i]=(c[i-1]>0&&c[i]>0)?Math.log(c[i]/c[i-1]):0;
+  let s=0,s2=0;
+  for(let i=1;i<c.length;i++){
+    s+=lr[i];s2+=lr[i]*lr[i];
+    if(i>win){s-=lr[i-win];s2-=lr[i-win]*lr[i-win];}
+    const n=Math.min(i,win);
+    if(n>=20){const m=s/n;o[i]=Math.sqrt(Math.max(0,s2/n-m*m))*Math.sqrt(252)*100;}}
+  return o;
+}
+function ind(e){
+  const k=e._key+'|'+e.rows.length;
+  if(CACHE.has(k))return CACHE.get(k);
+  const ts=[],c=[],vv=[],rr=[],a50=[],a200=[];
+  for(const r of e.rows){
+    const t=tsOfStr(r.d); if(isNaN(t)||!(r.c>0))continue;
+    ts.push(t);c.push(r.c);vv.push(r.v==null?null:r.v);rr.push(r.rsi==null?null:r.rsi);
+    a50.push(r.m50==null?null:r.m50);a200.push(r.m200==null?null:r.m200);}
+  const has=a=>a.some(x=>x!=null);
+  const o50=sma(c,50),o200=sma(c,200),oR=rsiCalc(c,7);
+  const m50 =has(a50) ?a50.map((x,i)=>x==null?o50[i]:x)   :o50;
+  const m200=has(a200)?a200.map((x,i)=>x==null?o200[i]:x) :o200;
+  const rsi =has(rr)  ?rr.map((x,i)=>x==null?oR[i]:x)     :oR;
+  const cr=[];
+  for(let i=1;i<c.length;i++){
+    if(m50[i]==null||m200[i]==null||m50[i-1]==null||m200[i-1]==null)continue;
+    const d=m50[i]-m200[i],p=m50[i-1]-m200[i-1];
+    if(p!==0&&Math.sign(d)!==Math.sign(p)&&d!==0)cr.push({i:i,type:d>0?'golden':'death'});}
+  const lc=new Array(c.length).fill(null);let ci=0,cu=null;
+  for(let i=0;i<c.length;i++){while(ci<cr.length&&cr[ci].i<=i){cu=cr[ci];ci++;}lc[i]=cu;}
+  const vAvg=new Array(c.length).fill(null);let vs=0,vn=0;
+  for(let i=0;i<c.length;i++){
+    if(vv[i]!=null){vs+=vv[i];vn++;}
+    if(i>=50&&vv[i-50]!=null){vs-=vv[i-50];vn--;}
+    vAvg[i]=vn>5?vs/vn:null;}
+  const o={ts,c,v:vv,vAvg,rsi,m50,m200,vol:rollVol(c,120),crosses:cr,lastCross:lc,n:c.length,
+    gaveMA:has(a50)&&has(a200),gaveVol:has(vv)};
+  CACHE.set(k,o);return o;
+}
+const slope=(a,i,l)=>{const x=a[i-l],y=a[i];return(x==null||y==null||x<=0)?null:(y/x-1)*100;};
+
+function scoreAt(D,i){
+  if(i<20||i>=D.n||D.m50[i]==null||D.m200[i]==null)return null;
+  const px=D.c[i],d200=(px/D.m200[i]-1)*100,d50=(px/D.m50[i]-1)*100;
+  const spread=(D.m50[i]/D.m200[i]-1)*100;
+  const s50=slope(D.m50,i,20),s200=slope(D.m200,i,20),cross=D.lastCross[i],th=Math.tanh;
+  let fresh=0; if(cross)fresh=(cross.type==='golden'?1:-1)*Math.exp(-(i-cross.i)/70);
+  const trend=clamp((0.30*th(spread/8)+0.24*th(d200/12)
+    +0.22*(s50==null?0:th(s50/6))+0.10*(s200==null?0:th(s200/4))+0.14*fresh+1)*5,0,10);
+  let hi=px; for(let k=Math.max(0,i-500);k<=i;k++)if(D.c[k]>hi)hi=D.c[k];
+  const toHigh=(hi/px-1)*100, potential=toHigh<=0?0:Math.min(60,toHigh*0.55);
+  const vola=D.vol[i]||25, z=d50/(vola*Math.sqrt(50/252)), rsi=D.rsi[i];
+  const rc=rsi==null?0:clamp((55-rsi)/25,-1,1);
+  const timing=clamp(5*(1+0.55*rc+0.45*(-th(z))),0,10);
+  const vRatio=(D.v[i]!=null&&D.vAvg[i])?D.v[i]/D.vAvg[i]:null;
+  let phase;
+  if(spread>0&&d200>0&&(s50||0)>0)     phase='Aufw\u00e4rts best\u00e4tigt';
+  else if(spread<0&&(s50||0)>0&&d50>0) phase='Bodenbildung, dreht';
+  else if(spread>0&&(s50||0)<0)        phase='Aufw\u00e4rts, verliert Schwung';
+  else if(spread<0&&(s50||0)<0)        phase='Abw\u00e4rts';
+  else                                  phase='Seitw\u00e4rts, unklar';
+  const tlab=timing>=7?'Ruhig, nicht \u00fcberdehnt':timing>=4?'Neutral':
+             timing>=2?'Schon gelaufen':'Hei\u00df gelaufen';
+  return {i,px,d200,d50,spread,s50,cross,vol:vola,trend,timing,z,rsi,vRatio,
+          potential,toHigh,hi,phase,tlab};
+}
+const scoreNow=e=>{const D=ind(e);return scoreAt(D,D.n-1);};
+
+/* ---------- Kosten ---------- */
+const feeDirekt=a=>a<=0?0:Math.min(CFG.feeBase+a*CFG.feePct/100,CFG.feeCap);
+const feeSpar  =a=>a<=0?0:a*CFG.sparPct/100;
+const roundTripPct=a=>a>0?2*feeDirekt(a)/a*100:0;
+const netOf=(R,f)=>(R>0?R*(1-TAX):R)-f;
+function settle(t,exitPx){
+  const stk=t.amount/t.entry, erloes=stk*exitPx;
+  const fk=feeDirekt(t.amount), fv=feeDirekt(erloes), roh=erloes-t.amount;
+  const steuer=Math.max(0,roh-fk-fv)*TAX, netto=roh-fk-fv-steuer;
+  return {stk,erloes,fk,fv,roh,steuer,netto,pct:netto/t.amount*100,brutto:(exitPx/t.entry-1)*100};
+}
+
+/* ---------- Stop, Ziele, Signale ---------- */
+function stopPlan(e){
+  const D=ind(e),i=D.n-1,s=scoreAt(D,i);
+  if(!s||s.vol==null)return null;
+  const dist=clamp(CFG.stopK*s.vol,10,30), capped=CFG.stopK*s.vol>30;
+  const hold=90;let trig=0,runs=0;
+  for(let k=60;k<D.n-hold;k+=5){
+    runs++;let pk=D.c[k];
+    for(let j=k+1;j<=k+hold;j++){if(D.c[j]>pk)pk=D.c[j];
+      if(D.c[j]<=pk*(1-dist/100)){trig++;break;}}}
+  return {dist,capped,level:s.px*(1-dist/100),trigRate:runs?trig/runs*100:null,
+          px:s.px,vol:s.vol,risk:CFG.amount*dist/100};
+}
+function targets(e){
+  const D=ind(e),i=D.n-1,s=scoreAt(D,i); if(!s)return null;
+  let t1=null,t1n='';
+  if(D.m200[i]!=null&&D.m200[i]>s.px){t1=D.m200[i];t1n='200-Tage-Linie';}
+  else if(D.m50[i]!=null&&D.m50[i]>s.px){t1=D.m50[i];t1n='50-Tage-Linie';}
+  else{let hi=s.px;for(let k=Math.max(0,i-250);k<=i;k++)if(D.c[k]>hi)hi=D.c[k];
+    if(hi>s.px*1.005){t1=hi;t1n='Hoch der letzten 12 Monate';}}
+  return {t1,t1n,t1p:t1?(t1/s.px-1)*100:null,t2:s.px*(1+s.potential/100)};
+}
+function exitSignals(e){
+  const D=ind(e),i=D.n-1,s=scoreAt(D,i),sp=stopPlan(e); if(!s)return [];
+  const o=[];
+  if(s.cross&&s.cross.type==='death'&&(i-s.cross.i)<25)o.push({lvl:'bad',t:'Death Cross',
+    d:'Die 50er hat die 200er vor '+(i-s.cross.i)+' Handelstagen nach unten geschnitten.'});
+  if(D.m200[i]!=null&&s.px<D.m200[i])o.push({lvl:'warn',t:'Unter der 200er',
+    d:'Kurs unter '+eur(D.m200[i])+'. Das ist der Notausgang, den wir gepr\u00fcft haben \u2013 '
+     +'er kostet dich die gro\u00dfen Treffer und erspart die tiefen L\u00f6cher.'});
+  if(s.d50<0&&(s.s50||0)<0)o.push({lvl:'warn',t:'Schwung weg',
+    d:'Kurs unter der 50er und die 50er f\u00e4llt.'});
+  if(s.rsi!=null&&s.rsi>=70)o.push({lvl:'good',t:'RSI '+nf0.format(s.rsi),
+    d:'\u00dcberkauft. Klingt nach Warnung \u2013 im R\u00fcckblick liefen genau solche Tage '
+     +'aber besser als ruhige. Beschreibung, keine Empfehlung.'});
+  if(s.rsi!=null&&s.rsi<=30)o.push({lvl:'warn',t:'RSI '+nf0.format(s.rsi),
+    d:'\u00dcberverkauft. Im Test war das die schlechtere Einstiegsgegend, nicht die bessere.'});
+  if(!o.length)o.push({lvl:'good',t:'Nichts Auff\u00e4lliges',
+    d:'Kurs \u00fcber beiden Linien, kein Kreuz nach unten.'});
+  return o;
+}
+function buyCompare(e){
+  const a=CFG.amount; if(!(a>0))return null;
+  const fd=feeDirekt(a),fs=feeSpar(a),diff=fd-fs;
+  let days=null;
+  if(CFG.sparDate){const t=tsOfStr(CFG.sparDate);
+    if(!isNaN(t)){const n=new Date();
+      days=Math.round((t-Date.UTC(n.getFullYear(),n.getMonth(),n.getDate()))/DAY);}}
+  let move=null,moveEur=null;
+  if(days!=null&&days>0&&e){const s=scoreNow(e);
+    if(s&&s.vol!=null){move=s.vol*Math.sqrt(Math.max(1,days*5/7)/252);moveEur=a*move/100;}}
+  const brk=CFG.sparPct>CFG.feePct?CFG.feeBase/((CFG.sparPct-CFG.feePct)/100):null;
+  return {a,fd,fs,diff,days,move,moveEur,brk};
+}
+function backtest(e){
+  const D=ind(e); if(D.n<260)return null;
+  const sp=stopPlan(e); if(!sp)return null;
+  const feeP=roundTripPct(CFG.amount);
+  const go=tm=>{
+    const tr=[];let i=25,flat=true,ent=0,entI=0,peak=0,dist=0;
+    while(i<D.n){
+      if(flat){
+        const s=scoreAt(D,i),p=scoreAt(D,i-1);
+        if(s&&p&&s.trend>=CFG.thresh&&p.trend<CFG.thresh&&(tm==null||s.timing>=tm)&&D.vol[i]!=null){
+          flat=false;ent=D.c[i];entI=i;peak=ent;dist=clamp(CFG.stopK*D.vol[i],10,30);}
+      }else{
+        if(D.c[i]>peak)peak=D.c[i];
+        const cr=D.lastCross[i],death=cr&&cr.type==='death'&&(i-cr.i)<3;
+        const st=D.c[i]<=peak*(1-dist/100);
+        if(st||death||(i-entI)>250||i===D.n-1){
+          tr.push({net:netOf((D.c[i]/ent-1)*100,feeP)});flat=true;}}
+      i++;}
+    if(!tr.length)return {n:0};
+    let c=1;tr.forEach(t=>c*=(1+t.net/100));
+    return {n:tr.length,win:tr.filter(t=>t.net>0).length/tr.length*100,total:(c-1)*100};
+  };
+  return {plain:go(null),timed:go(CFG.timeMin),bh:netOf((D.c[D.n-1]/D.c[25]-1)*100,feeP),
+          from:D.ts[25],to:D.ts[D.n-1],dist:sp.dist};
+}
+
+/* ---------- Chart ---------- */
+function chartHTML(e){
+  const D=ind(e); if(D.n<3)return '<div class="sub">Zu wenig Kurse.</div>';
+  const box=$('cbox'), W=Math.max(320,box?box.clientWidth:760);
+  const H=clamp(Math.round(W*0.62),300,470);
+  const PL=8,PR=54,PT=14,PBp=Math.round(H*0.60),RT=Math.round(H*0.70),RB=Math.round(H*0.90);
+  if(!VIEW||VIEW.key!==e._key)VIEW={key:e._key,i0:Math.max(0,D.n-260),i1:D.n-1};
+  let i0=clamp(Math.round(VIEW.i0),0,D.n-2),i1=clamp(Math.round(VIEW.i1),i0+2,D.n-1);
+  VIEW.i0=i0;VIEW.i1=i1;
+  let lo=Infinity,hi=-Infinity;
+  for(let i=i0;i<=i1;i++)for(const v of [D.c[i],D.m50[i],D.m200[i]]){
+    if(v==null)continue;if(v<lo)lo=v;if(v>hi)hi=v;}
+  if(!(hi>lo))return '<div class="sub">Kursbereich nicht darstellbar.</div>';
+  const pd=(hi-lo)*0.08;lo-=pd;hi+=pd;
+  const X=i=>PL+((i-i0)/(i1-i0))*(W-PL-PR), Y=v=>PT+(1-(v-lo)/(hi-lo))*(PBp-PT);
+  const step=Math.max(1,Math.ceil((i1-i0)/900));
+  const poly=(a,col,w,dash)=>{const seg=[];let cur=[];
+    for(let i=i0;i<=i1;i+=step){const v=a[i];
+      if(v==null){if(cur.length>1)seg.push(cur.join(' '));cur=[];continue;}
+      cur.push(X(i).toFixed(1)+','+Y(v).toFixed(1));}
+    if(a[i1]!=null)cur.push(X(i1).toFixed(1)+','+Y(a[i1]).toFixed(1));
+    if(cur.length>1)seg.push(cur.join(' '));
+    return seg.map(p=>'<polyline fill="none" stroke="'+col+'" stroke-width="'+w
+      +'" stroke-linejoin="round"'+(dash?' stroke-dasharray="'+dash+'"':'')+' points="'+p+'"/>').join('');};
+  let grid='';
+  for(let k=0;k<=4;k++){const v=lo+(hi-lo)*k/4,y=Y(v);
+    grid+='<line x1="'+PL+'" y1="'+y.toFixed(1)+'" x2="'+(W-PR)+'" y2="'+y.toFixed(1)
+      +'" stroke="#2A3341" stroke-width="1" opacity="0.5"/><text x="'+(W-PR+6)+'" y="'+(y+3.5).toFixed(1)
+      +'" fill="#8A94A6" font-size="10" font-family="ui-monospace,monospace">'+nf2.format(v)+'</text>';}
+  let vol='';
+  if(D.gaveVol){let vm=0;for(let i=i0;i<=i1;i++)if(D.v[i]>vm)vm=D.v[i];
+    if(vm>0){const vh=Math.round((PBp-PT)*0.18),bw=Math.max(1,(W-PL-PR)/(i1-i0+1)*0.7);
+      for(let i=i0;i<=i1;i+=step){if(D.v[i]==null)continue;
+        const h=D.v[i]/vm*vh,up=i>0&&D.c[i]>=D.c[i-1];
+        vol+='<rect x="'+(X(i)-bw/2).toFixed(1)+'" y="'+(PBp-h).toFixed(1)+'" width="'+bw.toFixed(1)
+          +'" height="'+h.toFixed(1)+'" fill="'+(up?'#4ED8A0':'#F2637E')+'" opacity="0.20"/>';}}}
+  let marks='';
+  D.crosses.forEach(cr=>{if(cr.i<i0||cr.i>i1)return;
+    const x=X(cr.i),y=Y(D.m50[cr.i]),g=cr.type==='golden';
+    marks+='<line x1="'+x.toFixed(1)+'" y1="'+PT+'" x2="'+x.toFixed(1)+'" y2="'+PBp+'" stroke="'
+      +(g?'#F0B429':'#F2637E')+'" stroke-width="1" opacity="0.2"/><circle cx="'+x.toFixed(1)+'" cy="'
+      +y.toFixed(1)+'" r="4.5" fill="'+(g?'#F0B429':'#F2637E')+'" stroke="#12161F" stroke-width="1.5"/>';});
+  let lines='';
+  const sp=stopPlan(e);
+  if(sp&&sp.level>lo&&sp.level<hi)
+    lines+='<line x1="'+PL+'" y1="'+Y(sp.level).toFixed(1)+'" x2="'+(W-PR)+'" y2="'+Y(sp.level).toFixed(1)
+      +'" stroke="#F2637E" stroke-width="1.2" stroke-dasharray="5 4" opacity="0.85"/><text x="'+(PL+5)
+      +'" y="'+(Y(sp.level)-5).toFixed(1)+'" fill="#F2637E" font-size="10" '
+      +'font-family="ui-monospace,monospace">Stop '+nf2.format(sp.level)+'</text>';
+  const op=TR.find(t=>!t.exit&&t.title===e._key);
+  if(op&&op.entry>lo&&op.entry<hi)
+    lines+='<line x1="'+PL+'" y1="'+Y(op.entry).toFixed(1)+'" x2="'+(W-PR)+'" y2="'+Y(op.entry).toFixed(1)
+      +'" stroke="#E6EAF2" stroke-width="1.2" stroke-dasharray="2 4" opacity="0.7"/><text x="'+(PL+5)
+      +'" y="'+(Y(op.entry)-5).toFixed(1)+'" fill="#E6EAF2" font-size="10" '
+      +'font-family="ui-monospace,monospace">dein Einstieg '+nf2.format(op.entry)+'</text>';
+  const YR=v=>RT+(1-v/100)*(RB-RT);
+  let rsiP='<rect x="'+PL+'" y="'+YR(70).toFixed(1)+'" width="'+(W-PL-PR)+'" height="'
+    +(YR(30)-YR(70)).toFixed(1)+'" fill="#9B8CFF" opacity="0.05"/>';
+  [30,70].forEach(v=>{rsiP+='<line x1="'+PL+'" y1="'+YR(v).toFixed(1)+'" x2="'+(W-PR)+'" y2="'
+    +YR(v).toFixed(1)+'" stroke="#6C7A90" stroke-width="1" stroke-dasharray="3 3" opacity="0.55"/>'
+    +'<text x="'+(W-PR+6)+'" y="'+(YR(v)+3.5).toFixed(1)+'" fill="#8A94A6" font-size="9" '
+    +'font-family="ui-monospace,monospace">'+v+'</text>';});
+  {const seg=[];let cur=[];
+   for(let i=i0;i<=i1;i+=step){const v=D.rsi[i];
+     if(v==null){if(cur.length>1)seg.push(cur.join(' '));cur=[];continue;}
+     cur.push(X(i).toFixed(1)+','+YR(v).toFixed(1));}
+   if(cur.length>1)seg.push(cur.join(' '));
+   rsiP+=seg.map(p=>'<polyline fill="none" stroke="#9B8CFF" stroke-width="1.4" points="'+p+'"/>').join('');}
+  rsiP+='<text x="'+(PL+3)+'" y="'+(RT-4)+'" fill="#8A94A6" font-size="9.5" letter-spacing="1.5" '
+    +'font-family="ui-monospace,monospace">RSI</text>';
+  let xax='';
+  for(let k=0;k<=3;k++){const i=Math.round(i0+(i1-i0)*k/3);
+    xax+='<text x="'+X(i).toFixed(1)+'" y="'+(H-5)+'" fill="#8A94A6" font-size="10" text-anchor="'
+      +(k===0?'start':(k===3?'end':'middle'))+'" font-family="ui-monospace,monospace">'
+      +fmtDs(D.ts[i])+'</text>';}
+  let ch='';
+  if(HOVER!=null){const i=clamp(HOVER,i0,i1),x=X(i);
+    ch='<line x1="'+x.toFixed(1)+'" y1="'+PT+'" x2="'+x.toFixed(1)+'" y2="'+RB
+      +'" stroke="#8A94A6" stroke-width="1" opacity="0.5"/><circle cx="'+x.toFixed(1)+'" cy="'
+      +Y(D.c[i]).toFixed(1)+'" r="3.5" fill="#E6EAF2"/>'
+      +(D.rsi[i]!=null?'<circle cx="'+x.toFixed(1)+'" cy="'+YR(D.rsi[i]).toFixed(1)
+        +'" r="3" fill="#9B8CFF"/>':'');}
+  const up=D.c[i1]>=D.c[i0];
+  return '<svg viewBox="0 0 '+W+' '+H+'" width="'+W+'" height="'+H+'">'
+    +grid+vol+marks+lines+poly(D.m200,'#6C7A90',1.4,'')+poly(D.m50,'#F0B429',1.3,'5 3')
+    +poly(D.c,up?'#4ED8A0':'#F2637E',1.9,'')+rsiP+ch+xax+'</svg>';
+}
+function readout(e){
+  const D=ind(e),i=HOVER!=null?clamp(HOVER,0,D.n-1):D.n-1,s=scoreAt(D,i);
+  if(!s)return '';
+  return '<div class="sub">'+fmtD(D.ts[i])+' \u00b7 Kurs '+eur(s.px)
+   +' \u00b7 50er '+(D.m50[i]==null?'\u2013':eur(D.m50[i]))
+   +' \u00b7 200er '+(D.m200[i]==null?'\u2013':eur(D.m200[i]))
+   +(s.rsi!=null?' \u00b7 RSI '+nf.format(s.rsi):'')+'</div>';
+}
+function paintChart(){
+  if(TAB!=='A')return;
+  const e=PX.get(SEL); if(!e)return;
+  const b=$('cbox'); if(b)b.innerHTML=chartHTML(e);
+  const r=$('cro'); if(r)r.innerHTML=readout(e);
+}
+function sparkSVG(name,fromTs){
+  const e=PX.get(name); if(!e)return '';
+  const D=ind(e); if(D.n<5)return '';
+  let i0=0;
+  if(fromTs){while(i0<D.n-2&&D.ts[i0]<fromTs)i0++;i0=Math.max(0,i0-20);}
+  else i0=Math.max(0,D.n-260);
+  const W=600,H=46;
+  let lo=Infinity,hi=-Infinity;
+  for(let i=i0;i<D.n;i++)for(const v of [D.c[i],D.m200[i]]){if(v==null)continue;if(v<lo)lo=v;if(v>hi)hi=v;}
+  if(!(hi>lo))return '';
+  const X=i=>((i-i0)/(D.n-1-i0))*W, Y=v=>H-2-((v-lo)/(hi-lo))*(H-4);
+  const st=Math.max(1,Math.ceil((D.n-i0)/400));
+  const ln=(a,c,w,d)=>{const p=[];
+    for(let i=i0;i<D.n;i+=st){if(a[i]==null)continue;p.push(X(i).toFixed(1)+','+Y(a[i]).toFixed(1));}
+    if(a[D.n-1]!=null)p.push(X(D.n-1).toFixed(1)+','+Y(a[D.n-1]).toFixed(1));
+    return p.length>1?'<polyline fill="none" stroke="'+c+'" stroke-width="'+w+'"'
+      +(d?' stroke-dasharray="'+d+'"':'')+' points="'+p.join(' ')+'"/>':'';};
+  return '<div class="spark"><svg viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="none">'
+    +ln(D.m200,'#6C7A90',1.2,'4 3')+ln(D.c,'#E6EAF2',1.6,'')+'</svg></div>';
+}
+
+/* ---------- Tab A: Analyse ---------- */
+const zone=v=>v>=7?'pass':(v>=4?'gold':'fail');
+function segs(v){let s='';
+  for(let k=1;k<=10;k++){const on=v>=k-0.5,c=k<=3?'#F2637E':(k<=6?'#F0B429':'#4ED8A0');
+    s+='<i class="'+(on?'on':'')+'" style="'+(on?'background:'+c:'')+'"></i>';}
+  return s;}
+function rank(){
+  const o=[];for(const [n,e] of PX)o.push({name:n,e,s:scoreNow(e)});
+  o.sort((a,b)=>((b.s?b.s.trend:-1)-(a.s?a.s.trend:-1)));return o;}
+function viewA(){
+  if(!PX.size)return '<div class="card dash"><div class="sub">Noch keine Kursdaten. '
+    +'Lade deine ING-CSV-Exporte \u2013 die Analyse und das Handelsbuch nutzen dieselben Dateien.</div></div>';
+  if(SEL&&!PX.has(SEL))SEL=null;
+  if(!SEL)SEL=rank()[0].name;
+  let out='<div class="card"><h4>Titel</h4>'+rank().map(r=>{
+    const s=r.s;
+    return '<div class="row'+(r.name===SEL?' sel':'')+'" data-sel="'+esc(r.name)+'">'
+     +'<div><div class="nm">'+esc(r.name)+'</div><div class="mt">'
+     +(s?s.phase+' \u00b7 Potenzial '+sgn(s.potential)+'\u2009%'
+        +(s.rsi!=null?' \u00b7 RSI '+nf0.format(s.rsi):''):'zu wenig Historie')+'</div></div>'
+     +'<div class="sc '+(s?zone(s.trend):'dim')+'">'+(s?nf.format(s.trend):'\u2013')+'<em>Trend</em></div>'
+     +'<div class="sc '+(s?zone(s.timing):'dim')+'">'+(s?nf.format(s.timing):'\u2013')+'<em>Timing</em></div>'
+     +'<button class="rx" data-del="'+esc(r.name)+'" aria-label="entfernen">\u00d7</button></div>';
+  }).join('')+'</div>';
+
+  const e=PX.get(SEL), s=scoreNow(e), D=ind(e);
+  if(!s)return out+'<div class="card dash"><div class="sub">F\u00fcr '+esc(SEL)
+    +' reicht die Historie nicht.</div></div>';
+  const tg=targets(e), sp=stopPlan(e), bc=buyCompare(e), bt=backtest(e);
+
+  out+='<div class="card"><h4>'+esc(SEL)+'</h4><div class="duo">'
+   +'<div class="gauge"><div class="eyebrow">Trend '
+   +  '<button class="info" data-info="trend" aria-label="Erkl\u00e4rung">i</button></div>'
+   +  '<div class="bignum '+zone(s.trend)+'">'+nf.format(s.trend)+'<small>/ 10</small></div>'
+   +  '<div class="seg">'+segs(s.trend)+'</div><div class="lab">'+s.phase+'</div>'
+   +  '<div class="sub">Kurs '+sgn(s.d200)+'\u2009% zur 200er \u00b7 50er '+sgn(s.spread)+'\u2009% zur 200er<br>'
+   +  (s.cross?(s.cross.type==='golden'?'Golden Cross':'Death Cross')+' vor '+(D.n-1-s.cross.i)+' Tagen'
+      :'keine Kreuzung')+'</div></div>'
+   +'<div class="gauge"><div class="eyebrow">Timing '
+   +  '<button class="info" data-info="timing" aria-label="Erkl\u00e4rung">i</button></div>'
+   +  '<div class="bignum '+zone(s.timing)+'">'+nf.format(s.timing)+'<small>/ 10</small></div>'
+   +  '<div class="seg">'+segs(s.timing)+'</div><div class="lab">'+s.tlab+'</div>'
+   +  '<div class="sub">'+(s.rsi!=null?'RSI '+nf.format(s.rsi):'kein RSI')+' \u00b7 '+sgn(s.d50)
+   +  '\u2009% zur 50er<br>'+(s.vRatio!=null?'Volumen '+nf2.format(s.vRatio)+'\u00d7 des Schnitts'
+      :'kein Volumen')+'</div></div></div>';
+  const op=TR.find(t=>!t.exit&&t.title===SEL);
+  if(op){const st=settle(op,s.px);
+    out+='<div class="flag '+(st.netto>=0?'good':'warn')+'">Du h\u00e4ltst diesen Titel seit '
+     +fmtD(tsOfStr(op.date))+': '+eur(op.entry)+' \u2192 '+eur(s.px)+', nach Kosten und Steuer '
+     +sgn(st.pct)+'\u2009%. Details im Handelsbuch.</div>';}
+  if(s.vRatio!=null&&s.vRatio<0.7&&s.d50>0)
+    out+='<div class="flag warn">Die Bewegung l\u00e4uft mit '+nf2.format(s.vRatio)
+     +'\u00d7 des \u00fcblichen Volumens \u2013 wenig Umsatz, wenig \u00dcberzeugung dahinter.</div>';
+  else if(s.vRatio!=null&&s.vRatio>1.4)
+    out+='<div class="flag good">Volumen bei '+nf2.format(s.vRatio)
+     +'\u00d7 des Schnitts \u2013 hinter der Bewegung steht echtes Geld.</div>';
+  out+='</div>';
+
+  out+='<div class="card"><h4>Chart</h4><div class="chartbox" id="cbox"></div><div id="cro"></div>'
+   +'<div class="ctrl"><button class="chip" data-zoom="in">Gr&ouml;&szlig;er</button>'
+   +'<button class="chip" data-zoom="out">Kleiner</button>'
+   +'<button class="chip" data-span="65">3M</button><button class="chip" data-span="130">6M</button>'
+   +'<button class="chip" data-span="260">1J</button><button class="chip" data-span="780">3J</button>'
+   +'<button class="chip" data-span="0">Alles</button></div>'
+   +'<div class="legend"><span><i style="background:#4ED8A0"></i>Kurs</span>'
+   +'<span><i style="background:#F0B429"></i>50 Tage</span>'
+   +'<span><i style="background:#6C7A90"></i>200 Tage</span>'
+   +'<span><i style="background:#9B8CFF"></i>RSI</span>'
+   +'<span><i style="background:#F2637E"></i>Stop</span></div>'
+   +'<div class="sub">Ziehen verschiebt, Mausrad oder zwei Finger zoomen. Punkte sind Kreuzungen, '
+   +'Balken am Fu&szlig; das Volumen.</div></div>';
+
+  out+='<div class="card"><h4>Potenzial <button class="info" data-info="potenzial" '
+   +'aria-label="Erkl&auml;rung">i</button></h4><div class="kv">'
+   +'<div><span>Luft bis zum Hoch der letzten 2 Jahre</span><span>'+sgn(s.toHigh)+'\u2009% ('+eur(s.hi)+')</span></div>'
+   +'<div><span>Ged&auml;mpft angesetzt</span><span class="gold">'+sgn(s.potential)+'\u2009%</span></div>'
+   +(tg&&tg.t1?'<div><span>N&auml;chstes Ziel: '+tg.t1n+'</span><span>'+eur(tg.t1)+' \u00b7 '
+     +sgn(tg.t1p)+'\u2009%</span></div>':'')
+   +'<div class="tot"><span>Weites Ziel</span><span>'+eur(tg?tg.t2:null)+'</span></div></div></div>';
+
+  if(bc){
+    out+='<div class="card"><h4>Einstieg <button class="info" data-info="sparplan" '
+     +'aria-label="Erkl&auml;rung">i</button></h4><div class="kv">'
+     +'<div><span>Direktkauf '+eur(bc.a)+'</span><span>'+eur(bc.fd)+'</span></div>'
+     +'<div><span>Sparplan '+nf2.format(CFG.sparPct)+'\u2009%</span><span>'+eur(bc.fs)+'</span></div>'
+     +'<div class="tot"><span>G&uuml;nstiger</span><span class="'+(bc.diff>0?'pass':'dim')+'">'
+     +(bc.diff>0?'Sparplan':'Direktkauf')+', '+eur(Math.abs(bc.diff))+' Unterschied</span></div></div>';
+    if(bc.days!=null&&bc.days>0&&bc.moveEur!=null){
+      const ra=bc.moveEur/Math.max(0.01,Math.abs(bc.diff));
+      out+='<div class="flag '+(ra>2?'warn':'good')+'">N&auml;chste Ausf&uuml;hrung in '+bc.days
+       +' Tag'+(bc.days===1?'':'en')+'. '+(bc.diff>0?'Warten spart '+eur(bc.diff)+'. '
+         :'Warten kostet '+eur(-bc.diff)+' mehr. ')
+       +'Der Titel bewegt sich bis dahin typischerweise um \u00b1'+eur(bc.moveEur)+'. '
+       +(ra>2?'Rund '+nf0.format(ra)+'-mal so viel wie der Geb&uuml;hrenunterschied.'
+             :'\u00c4hnliche Gr&ouml;&szlig;enordnung, Warten ist vertretbar.')+'</div>';}
+    out+='<div class="sub">Verkaufen geht nur direkt: '+eur(feeDirekt(bc.a))
+     +'. Hin und zur&uuml;ck '+nf.format(roundTripPct(bc.a))+'\u2009% vom Einsatz.</div></div>';
+  }
+
+  if(sp){
+    out+='<div class="card"><h4>Stop-Loss <button class="info" data-info="stopk" '
+     +'aria-label="Erkl&auml;rung">i</button></h4><div class="kv">'
+     +'<div><span>Abstand ('+nf2.format(CFG.stopK)+' \u00d7 '+nf.format(sp.vol)+'\u2009% Vola)</span><span>'
+     +nf.format(sp.dist)+'\u2009%'+(sp.capped?' (gedeckelt)':'')+'</span></div>'
+     +'<div><span>Stop setzen auf</span><span class="fail">'+eur(sp.level)+'</span></div>'
+     +(sp.trigRate!=null?'<div><span>Historisch ausgel&ouml;st</span><span>'
+       +nf0.format(sp.trigRate)+'\u2009%</span></div>':'')
+     +'<div class="tot"><span>Verlust wenn er greift</span><span class="fail">\u2212'
+     +eur(sp.risk)+'</span></div></div>';
+    if(sp.capped)out+='<div class="flag warn">Bei '+nf.format(sp.vol)+'\u2009% Schwankung m&uuml;sste '
+     +'der Stop weiter weg. Er ist bei 30\u2009% gedeckelt \u2013 du wirst hier &ouml;fter ausgestoppt '
+     +'als die Rechnung nahelegt.</div>';
+    if(sp.trigRate!=null&&sp.trigRate>50)out+='<div class="flag bad">Bei '+nf0.format(sp.trigRate)
+     +'\u2009% Ausl&ouml;serate w&auml;rst du st&auml;ndig rausgeflogen \u2013 jedes Mal mit vollen '
+     +'Geb&uuml;hren.</div>';
+    out+='</div>';
+  }
+
+  out+='<div class="card"><h4>Signale</h4>'
+   +exitSignals(e).map(x=>'<div class="flag '+x.lvl+'"><b>'+x.t+'</b> &middot; '+x.d+'</div>').join('')
+   +'</div>';
+
+  if(bt){
+    const ln=(l,r)=>r.n?'<div><span>'+l+'</span><span class="'+(r.total>=bt.bh?'pass':'fail')+'">'
+      +r.n+' Trades \u00b7 '+nf0.format(r.win)+'\u2009% im Plus \u00b7 '+sgn(r.total)+'\u2009%</span></div>'
+      :'<div><span>'+l+'</span><span class="dim">kein Signal</span></div>';
+    out+='<details class="card"><summary>R&uuml;ckblick auf die Regel</summary><div class="inner">'
+     +'<div class="bar" style="margin:0 0 10px"><button class="info" data-info="rueckblick" '
+     +'aria-label="Erkl&auml;rung">i</button></div><div class="kv">'
+     +ln('Nur Trend \u2265 '+nf.format(CFG.thresh),bt.plain)
+     +ln('Trend \u2265 '+nf.format(CFG.thresh)+' und Timing \u2265 '+nf.format(CFG.timeMin),bt.timed)
+     +'<div class="tot"><span>Einfach liegen lassen</span><span>'+sgn(bt.bh)+'\u2009%</span></div></div>'
+     +'<div class="sub">'+fmtD(bt.from)+' bis '+fmtD(bt.to)+' \u00b7 Stop '+nf.format(bt.dist)
+     +'\u2009% \u00b7 Geb&uuml;hren und Steuer sind drin.</div></div></details>';
+  }
+  return out;
+}
+
+/* ---------- Tab B: Handelsbuch ---------- */
+function suggestStop(){
+  const e=PX.get(val('nName').trim());
+  const s=e?scoreNow(e):null;
+  return (s&&s.vol!=null)?clamp(0.8*s.vol,10,30):15;
+}
+function syncStop(){if(STOPTOUCHED)return;const e=$('nStop');if(e)e.value=nf.format(suggestStop());}
+function stopPctOf(){const s=numOf(val('nStop'));return s>0?s:suggestStop();}
+function formHTML(){
+  const names=Array.from(PX.keys());
+  return '<div class="card"><h4>Neue Position</h4><div class="fields">'
+   +'<div><label class="f" for="nName">Titel</label>'
+   + (names.length?'<input list="nl" id="nName" placeholder="Name"><datalist id="nl">'
+      +names.map(n=>'<option value="'+esc(n)+'">').join('')+'</datalist>'
+      :'<input id="nName" placeholder="Name">')+'</div>'
+   +'<div><label class="f" for="nPx">Kaufkurs (&euro;)</label><input id="nPx" inputmode="decimal"></div>'
+   +'<div><label class="f" for="nAmt">Einsatz (&euro;)</label><input id="nAmt" inputmode="decimal" value="'
+   + (CFG.amount||1000)+'"></div>'
+   +'<div><label class="f" for="nDate">Kaufdatum</label><input id="nDate" type="date" value="'+today()+'"></div>'
+   +'<div><label class="f" for="nTgt">Dein Kursziel (&euro;)</label><input id="nTgt" inputmode="decimal"></div>'
+   +'<div><label class="f" for="nWk">In wie vielen Wochen</label><input id="nWk" inputmode="numeric" value="12"></div>'
+   +'<div><label class="f" for="nStop">Stop (% unter Kauf)</label><input id="nStop" inputmode="decimal"></div>'
+   +'<div><label class="f" for="nConf">Wie sicher bist du?</label><select id="nConf">'
+   +'<option value="1">1 &ndash; Versuch</option><option value="2">2</option>'
+   +'<option value="3" selected>3 &ndash; mittel</option><option value="4">4</option>'
+   +'<option value="5">5 &ndash; sehr sicher</option></select></div></div>'
+   +'<div style="margin-top:11px"><label class="f" for="nWhy">Warum kaufst du?</label>'
+   +'<textarea id="nWhy" placeholder="Die These in eigenen Worten. Was muss passieren, damit es aufgeht?"></textarea></div>'
+   +'<div id="calc"></div><div class="bar"><button class="b go" id="bAdd">Eintragen</button>'
+   +'<button class="b" id="bCancel">Abbrechen</button></div></div>';
+}
+function calcHTML(){
+  const px=numOf(val('nPx')),amt=numOf(val('nAmt')),tgt=numOf(val('nTgt')),wk=numOf(val('nWk'));
+  if(!(px>0)||!(amt>0))return '<div class="sub" style="margin-top:11px">Kaufkurs und Einsatz '
+    +'eintragen, dann rechne ich vor, was der Trade bringen muss.</div>';
+  const kosten=2*feeDirekt(amt);
+  const nullPct=(kosten/amt*100)/(1-TAX);
+  const e=PX.get(val('nName').trim()), s=e?scoreNow(e):null, vol=s?s.vol:null;
+  let out='<div class="kv" style="margin-top:12px">'
+   +'<div><span>Geb&uuml;hren Kauf + Verkauf</span><span>'+eur(kosten)+'</span></div>'
+   +'<div class="tot"><span>N&ouml;tig, nur um bei null zu landen '
+   +'<button class="info" data-info="nullinie" aria-label="Erkl&auml;rung">i</button></span>'
+   +'<span class="gold">'+sgn(nullPct)+'\u2009% \u00b7 '+eur(px*(1+nullPct/100))+'</span></div>';
+  if(tgt>0){
+    const brutto=(tgt/px-1)*100, stk=amt/px, erl=stk*tgt, roh=erl-amt;
+    const st=Math.max(0,roh-kosten)*TAX, netto=roh-kosten-st;
+    out+='<div><span>Dein Ziel brutto</span><span>'+sgn(brutto)+'\u2009%</span></div>'
+     +'<div><span>Davon Steuer</span><span>\u2212'+eur(st)+'</span></div>'
+     +'<div class="tot"><span>Bleibt dir</span><span class="'+(netto>=0?'pass':'fail')+'">'
+     +eur(netto)+' \u00b7 '+sgn(netto/amt*100)+'\u2009%</span></div>'
+     +(wk>0?'<div><span>Auf '+nf0.format(wk)+' Wochen entspricht das</span><span>'
+       +sgn(netto/amt*100*(52/wk))+'\u2009% im Jahr</span></div>':'')+'</div>';
+    if(brutto<nullPct)out+='<div class="flag bad">Dein Ziel liegt unter der Nulllinie. Selbst wenn '
+     +'es exakt eintrifft, machst du Verlust.</div>';
+    else if(brutto<nullPct*2)out+='<div class="flag warn">Vom Ziel bleibt nach Kosten und Steuer '
+     +'weniger als die H&auml;lfte. Der Trade muss sehr genau aufgehen.</div>';
+  }else out+='</div>';
+  const sd=stopPctOf(), verlust=amt*sd/100+kosten;
+  const herk=STOPTOUCHED?'Von dir gesetzt'
+    :vol!=null?'Automatisch aus der Schwankung des Titels ('+nf.format(vol)
+      +'\u2009% p.a.) \u2013 &uuml;berschreibbar'
+    :'Standardwert, automatisch eingetragen \u2013 ohne Kursdatei kann ich die Schwankung nicht messen';
+  out+='<div class="kv" style="margin-top:12px">'
+   +'<div><span>Stop bei</span><span class="fail">'+eur(px*(1-sd/100))+' \u00b7 \u2212'
+   +nf.format(sd)+'\u2009%</span></div>'
+   +'<div class="tot"><span>Verlust, wenn er greift</span><span class="fail">\u2212'
+   +eur(verlust)+'</span></div></div><div class="sub">'+herk+'. Ein Stop begrenzt den Schaden, '
+   +'er steigert nicht die Rendite.</div>';
+  return out;
+}
+function viewB(){
+  let out=FORM?formHTML():'<div class="bar" style="margin-top:0">'
+    +'<button class="b go" id="bNew">Neue Position</button></div>';
+  const off=TR.filter(t=>!t.exit);
+  out+='<div class="card"><h4>Offene Positionen</h4>';
+  if(!off.length)out+='<div class="sub">Nichts offen.</div>';
+  else out+=off.map(t=>{
+    const e=PX.get(t.title), D=e?ind(e):null;
+    const cur=D?D.c[D.n-1]:null, m200=D?D.m200[D.n-1]:null;
+    const s=cur?settle(t,cur):null;
+    const tage=Math.round((Date.now()-tsOfStr(t.date))/DAY);
+    let o='<div class="pos"><div class="top"><div><div class="nm">'+esc(t.title)+'</div>'
+     +'<div class="sub" style="margin-top:2px">'+eur(t.entry)+' am '+fmtD(tsOfStr(t.date))
+     +' \u00b7 '+eur(t.amount)+' \u00b7 seit '+tage+' Tagen</div></div>'
+     +'<div class="pl '+(s?(s.netto>=0?'pass':'fail'):'dim')+'">'
+     +(s?sgn(s.pct)+'\u2009%':'\u2013')+'</div></div>';
+    if(cur)o+=sparkSVG(t.title,tsOfStr(t.date));
+    if(s)o+='<div class="kv"><div><span>Kurs heute</span><span>'+eur(cur)+'</span></div>'
+     +'<div><span>Nach Geb&uuml;hren und Steuer</span><span class="'+(s.netto>=0?'pass':'fail')+'">'
+     +eur(s.netto)+'</span></div></div>';
+    if(t.target)o+='<div class="kv"><div><span>Dein Ziel</span><span>'+eur(t.target)
+     +(cur?' \u00b7 noch '+sgn((t.target/cur-1)*100)+'\u2009%':'')+'</span></div></div>';
+    if(t.stopPct>0){
+      let peak=t.entry;
+      if(D){const t0=tsOfStr(t.date);for(let i=0;i<D.n;i++)if(D.ts[i]>=t0&&D.c[i]>peak)peak=D.c[i];}
+      const lvl=peak*(1-t.stopPct/100), drunter=cur!=null&&cur<=lvl;
+      o+='<div class="kv"><div><span>Stop ('+nf.format(t.stopPct)+'\u2009% unter dem Hoch)</span>'
+       +'<span class="'+(drunter?'fail':'')+'">'+eur(lvl)
+       +(peak>t.entry?' \u00b7 nachgezogen von '+eur(peak):'')+'</span></div></div>';
+      if(drunter)o+='<div class="flag bad">Der Kurs steht unter deinem Stop. Das ist die Regel, '
+       +'die du dir beim Kauf gesetzt hast.</div>';
+    }
+    if(m200!=null&&cur!=null)o+='<div class="flag '+(cur<m200?'warn':'good')+'">'
+     +(cur<m200?'Unter der 200-Tage-Linie ('+eur(m200)+') \u2013 der Notausgang.'
+              :'\u00dcber der 200-Tage-Linie ('+eur(m200)+').')+'</div>';
+    if(t.why)o+='<div class="sub" style="margin-top:9px;color:var(--tx)">'+esc(t.why)+'</div>';
+    o+='<div class="bar"><button class="b mini" data-sell="'+t.id+'">Verkauft</button>'
+     +'<button class="b mini" data-dtr="'+t.id+'">L&ouml;schen</button></div></div>';
+    return o;
+  }).join('');
+  out+='</div>';
+
+  const zu=TR.filter(t=>t.exit);
+  if(zu.length){
+    const rows=zu.map(t=>({t,s:settle(t,t.exit),
+      zielPct:t.target?(t.target/t.entry-1)*100:null,
+      erreicht:t.target?(t.exit>=t.target):null}));
+    const n=rows.length, plus=rows.filter(r=>r.s.netto>0).length;
+    const netSum=rows.reduce((a,r)=>a+r.s.netto,0);
+    const kost=rows.reduce((a,r)=>a+r.s.fk+r.s.fv,0);
+    const steu=rows.reduce((a,r)=>a+r.s.steuer,0);
+    const mz=rows.filter(r=>r.zielPct!=null);
+    out+='<div class="card"><h4>Deine Bilanz <button class="info" data-info="bilanz" '
+     +'aria-label="Erkl&auml;rung">i</button></h4><div class="kv">'
+     +'<div><span>Abgeschlossene Trades</span><span>'+n+'</span></div>'
+     +'<div><span>Davon im Plus</span><span class="'+(plus/n>=0.5?'pass':'fail')+'">'
+     +nf0.format(plus/n*100)+'\u2009% ('+plus+' von '+n+')</span></div>'
+     +'<div><span>Geb&uuml;hren gezahlt</span><span>\u2212'+eur(kost)+'</span></div>'
+     +'<div><span>Steuer realisiert</span><span>\u2212'+eur(steu)+'</span></div>'
+     +'<div class="tot"><span>Unterm Strich</span><span class="'+(netSum>=0?'pass':'fail')+'">'
+     +eur(netSum)+'</span></div></div>';
+    if(mz.length){
+      const err=mz.filter(r=>r.erreicht).length;
+      const mZ=mz.reduce((a,r)=>a+r.zielPct,0)/mz.length;
+      const mI=mz.reduce((a,r)=>a+r.s.brutto,0)/mz.length;
+      out+='<div class="kv" style="margin-top:12px">'
+       +'<div><span>Kursziel erreicht</span><span>'+nf0.format(err/mz.length*100)+'\u2009% ('
+       +err+' von '+mz.length+')</span></div>'
+       +'<div><span>Im Schnitt erwartet</span><span>'+sgn(mZ)+'\u2009%</span></div>'
+       +'<div class="tot"><span>Im Schnitt eingetreten</span><span class="'+(mI>=mZ?'pass':'fail')
+       +'">'+sgn(mI)+'\u2009%</span></div></div>';
+      const bias=mI-mZ;
+      out+='<div class="flag '+(Math.abs(bias)<3?'good':'warn')+'">'
+       +(bias<-3?'Du liegst im Schnitt '+nf.format(-bias)+' Punkte &uuml;ber dem, was eintritt \u2013 '
+          +'du sch&auml;tzt systematisch zu optimistisch. Zieh k&uuml;nftig etwa so viel ab.'
+        :bias>3?'Du liegst im Schnitt '+nf.format(bias)+' Punkte unter dem, was eintritt \u2013 '
+          +'du untersch&auml;tzt dich.'
+        :'Deine Sch&auml;tzungen treffen im Mittel ganz gut.')+'</div>';
+    }
+    const hi=rows.filter(r=>r.t.conf>=4), lo=rows.filter(r=>r.t.conf<=2);
+    if(hi.length>=3&&lo.length>=3){
+      const mh=hi.reduce((a,r)=>a+r.s.pct,0)/hi.length, ml=lo.reduce((a,r)=>a+r.s.pct,0)/lo.length;
+      out+='<div class="kv" style="margin-top:12px">'
+       +'<div><span>Sichere Trades (4\u20135)</span><span>'+sgn(mh)+'\u2009% \u00b7 '+hi.length+'</span></div>'
+       +'<div class="tot"><span>Unsichere (1\u20132)</span><span>'+sgn(ml)+'\u2009% \u00b7 '+lo.length+'</span></div></div>'
+       +'<div class="sub">'+(mh>ml?'Deine sicheren Trades liefen besser. Erstes Anzeichen, dass dein '
+         +'Urteil etwas tr&auml;gt.':'Deine sicheren Trades liefen nicht besser. Deine Sicherheit sagt '
+         +'bisher nichts &uuml;ber den Ausgang.')+'</div>';
+    }
+    const fehlt=Math.max(0,20-n);
+    out+='<div class="flag '+(n>=20?'good':'warn')+'">'
+     +(n>=20?'Ab hier werden die Zahlen langsam aussagekr&auml;ftig \u2013 aber auch 20 Trades sind '
+        +'wenig. Ein einzelner gro&szlig;er Treffer kann die Bilanz allein tragen.'
+      :'Noch '+fehlt+' Trades, bis diese Zahlen mehr sind als Zufall. Bis dahin ist die Bilanz eine '
+        +'Notiz, kein Urteil.')+'</div></div>';
+    out+='<details class="card"><summary>Abgeschlossene Trades ('+zu.length+')</summary><div class="inner">'
+     +zu.slice().reverse().map(t=>{const s=settle(t,t.exit);
+       return '<div class="done"><div class="r1"><span>'+esc(t.title)+'</span><span class="'
+        +(s.netto>=0?'pass':'fail')+'">'+sgn(s.pct)+'\u2009% \u00b7 '+eur(s.netto)+'</span></div>'
+        +'<div class="r2">'+eur(t.entry)+' \u2192 '+eur(t.exit)+' \u00b7 '+fmtD(tsOfStr(t.date))
+        +' bis '+fmtD(tsOfStr(t.exitDate))+(t.target?' \u00b7 Ziel war '+eur(t.target):'')
+        +' \u00b7 Sicherheit '+t.conf+'</div>'
+        +(t.why?'<div class="r2" style="color:var(--tx)">'+esc(t.why)+'</div>':'')
+        +'<div class="bar"><button class="b mini" data-dtr="'+t.id+'">L&ouml;schen</button></div></div>';
+     }).join('')+'</div></details>';
+  }
+  return out;
+}
+
+/* ---------- Zeichnen und Binden ---------- */
+function render(){
+  $('tA').classList.toggle('on',TAB==='A');
+  $('tB').classList.toggle('on',TAB==='B');
+  $('viewA').innerHTML=TAB==='A'?viewA():'';
+  $('viewB').innerHTML=TAB==='B'?viewB():'';
+  $('bPrompt').style.display=(TAB==='A'&&SEL)?'':'none';
+  $('settings').style.display=PX.size||TR.length?'':'none';
+  bind();
+  if(TAB==='A')paintChart();
+  if(TAB==='B'&&FORM){syncStop();const c=$('calc');if(c)c.innerHTML=calcHTML();}
+}
+function bind(){
+  document.querySelectorAll('[data-sel]').forEach(el=>el.onclick=function(ev){
+    if(ev.target.dataset.del!==undefined)return;
+    SEL=this.dataset.sel;VIEW=null;HOVER=null;save();render();});
+  document.querySelectorAll('[data-del]').forEach(b=>b.onclick=function(ev){
+    ev.stopPropagation();const n=this.dataset.del;
+    if(!confirm('Kursdaten von "'+n+'" entfernen?'))return;
+    PX.delete(n);if(SEL===n){SEL=null;VIEW=null;}CACHE.clear();save();render();});
+  document.querySelectorAll('[data-zoom]').forEach(b=>b.onclick=function(){
+    zoomBy(this.dataset.zoom==='in'?0.7:1.4);});
+  document.querySelectorAll('[data-span]').forEach(b=>b.onclick=function(){
+    const e=PX.get(SEL);if(!e)return;const D=ind(e),sp=parseInt(this.dataset.span,10);
+    VIEW={key:e._key,i0:sp?Math.max(0,D.n-1-sp):0,i1:D.n-1};paintChart();});
+  const cb=$('cbox');if(cb)chartEvents(cb);
+  const nb=$('bNew');if(nb)nb.onclick=()=>{FORM=true;STOPTOUCHED=false;render();};
+  const ca=$('bCancel');if(ca)ca.onclick=()=>{FORM=false;render();};
+  const ad=$('bAdd');if(ad)ad.onclick=addTrade;
+  const rc=()=>{const c=$('calc');if(c)c.innerHTML=calcHTML();};
+  ['nPx','nAmt','nTgt','nWk'].forEach(id=>{const e=$(id);if(e)e.oninput=rc;});
+  const nn=$('nName');if(nn)nn.oninput=()=>{syncStop();rc();};
+  const ns=$('nStop');if(ns)ns.oninput=()=>{STOPTOUCHED=true;rc();};
+  document.querySelectorAll('[data-sell]').forEach(b=>b.onclick=function(){
+    const t=TR.find(x=>x.id===this.dataset.sell);if(!t)return;
+    const e=PX.get(t.title),D=e?ind(e):null;
+    const v=window.prompt('Zu welchem Kurs verkauft?',D?nf2.format(D.c[D.n-1]):'');
+    if(v===null)return;
+    const px=numOf(v);if(!(px>0)){say('Kurs nicht erkannt',true);return;}
+    const d=window.prompt('Verkaufsdatum (JJJJ-MM-TT)',today());if(d===null)return;
+    t.exit=px;t.exitDate=d||today();save();render();});
+  document.querySelectorAll('[data-dtr]').forEach(b=>b.onclick=function(){
+    const t=TR.find(x=>x.id===this.dataset.dtr);if(!t)return;
+    if(!confirm('Eintrag "'+t.title+'" l\u00f6schen?'))return;
+    TR=TR.filter(x=>x.id!==t.id);save();render();});
+}
+function addTrade(){
+  const title=val('nName').trim(),px=numOf(val('nPx')),amt=numOf(val('nAmt'));
+  if(!title){say('Titel fehlt',true);return;}
+  if(!(px>0)||!(amt>0)){say('Kaufkurs und Einsatz pr\u00fcfen',true);return;}
+  TR.push({id:String(Date.now()),title,entry:px,amount:amt,date:val('nDate')||today(),
+    target:numOf(val('nTgt')),weeks:numOf(val('nWk')),conf:parseInt(val('nConf'),10)||3,
+    stopPct:stopPctOf(),why:val('nWhy').trim(),exit:null,exitDate:null});
+  FORM=false;save();render();say('Eingetragen.');
+}
+function zoomBy(f,anchor){
+  const e=PX.get(SEL);if(!e||!VIEW)return;const D=ind(e);
+  const span=VIEW.i1-VIEW.i0,a=anchor==null?(VIEW.i0+VIEW.i1)/2:anchor;
+  const ns=clamp(span*f,20,D.n-1);
+  let i0=a-(a-VIEW.i0)*(ns/span),i1=i0+ns;
+  if(i0<0){i1-=i0;i0=0;}if(i1>D.n-1){i0-=(i1-(D.n-1));i1=D.n-1;}
+  VIEW.i0=Math.max(0,i0);VIEW.i1=Math.min(D.n-1,i1);paintChart();
+}
+function chartEvents(box){
+  const e=PX.get(SEL);if(!e)return;const D=ind(e);
+  const pts=new Map();let dragX=null,pinch=null;
+  const idxAt=cx=>{const r=box.getBoundingClientRect();
+    return VIEW.i0+clamp((cx-r.left-8)/(r.width-62),0,1)*(VIEW.i1-VIEW.i0);};
+  box.onwheel=ev=>{ev.preventDefault();zoomBy(ev.deltaY>0?1.15:0.87,idxAt(ev.clientX));};
+  box.onpointerdown=ev=>{box.setPointerCapture(ev.pointerId);pts.set(ev.pointerId,ev.clientX);
+    if(pts.size===1){dragX=ev.clientX;HOVER=Math.round(idxAt(ev.clientX));paintChart();}
+    if(pts.size===2){const v=Array.from(pts.values());pinch=Math.abs(v[0]-v[1]);dragX=null;}};
+  box.onpointermove=ev=>{
+    if(!pts.has(ev.pointerId)){if(pts.size===0){HOVER=Math.round(idxAt(ev.clientX));paintChart();}return;}
+    pts.set(ev.pointerId,ev.clientX);
+    if(pts.size===2&&pinch){const v=Array.from(pts.values()),d=Math.abs(v[0]-v[1]);
+      if(d>4){zoomBy(clamp(pinch/d,0.6,1.6));pinch=d;}return;}
+    if(dragX!=null){const r=box.getBoundingClientRect(),per=(VIEW.i1-VIEW.i0)/(r.width-62);
+      const sh=(dragX-ev.clientX)*per;let i0=VIEW.i0+sh,i1=VIEW.i1+sh;
+      if(i0<0){i1-=i0;i0=0;}if(i1>D.n-1){i0-=(i1-(D.n-1));i1=D.n-1;}
+      VIEW.i0=Math.max(0,i0);VIEW.i1=Math.min(D.n-1,i1);dragX=ev.clientX;HOVER=null;paintChart();}};
+  const end=ev=>{pts.delete(ev.pointerId);if(pts.size<2)pinch=null;if(pts.size===0)dragX=null;};
+  box.onpointerup=end;box.onpointercancel=end;
+  box.onpointerleave=()=>{if(pts.size===0&&HOVER!=null){HOVER=null;paintChart();}};
+}
+let rz;window.addEventListener('resize',()=>{clearTimeout(rz);rz=setTimeout(paintChart,140);});
+
+/* ---------- Einstellungen ---------- */
+const CM={cAmount:'amount',cDepot:'depot',cStopK:'stopK',cThresh:'thresh',cTimeMin:'timeMin',
+          cFeeBase:'feeBase',cFeePct:'feePct',cFeeCap:'feeCap',cSparPct:'sparPct'};
+Object.keys(CM).forEach(id=>{$(id).addEventListener('input',function(){
+  const v=parseFloat(String(this.value).replace(',','.'));
+  CFG[CM[id]]=isNaN(v)?(id==='cDepot'?null:0):v;
+  if(id==='cStopK')CFG.stopK=clamp(isNaN(v)?0.8:v,0.3,2);
+  save();render();});});
+$('cSparDate').addEventListener('change',function(){CFG.sparDate=this.value;save();render();});
+
+/* ---------- Import und Speichern ---------- */
+$('tA').onclick=()=>{TAB='A';render();};
+$('tB').onclick=()=>{TAB='B';render();};
+$('bHelp').onclick=()=>showInfo('hilfe');
+$('bCsv').onclick=()=>$('fCsv').click();
+$('fCsv').onchange=function(){
+  const fs=Array.prototype.slice.call(this.files);this.value='';
+  if(!fs.length)return;
+  say('Lese '+fs.length+' Datei'+(fs.length>1?'en':'')+' \u2026');
+  Promise.all(fs.map(f=>readText(f).then(t=>({t})).catch(e=>({err:f.name+': '+e.message}))))
+   .then(res=>{
+     const ok=[],bad=[];let ex=null;
+     res.forEach(x=>{if(x.err){bad.push(x.err);return;}
+       try{const p=parseCSV(x.t);ex=p.extras;
+         if(!PX.has(p.name))PX.set(p.name,{rows:[],_key:p.name});
+         const e=PX.get(p.name);e._key=p.name;e.rows=mergeRows(e.rows,p.rows);ok.push(p.name);}
+       catch(err){bad.push(err.message);}});
+     CACHE.clear();if(!SEL&&ok.length)SEL=ok[0];
+     save();render();
+     const u=Array.from(new Set(ok));
+     let m=u.length?u.length+' Titel geladen: '+u.join(', '):'';
+     if(ex&&u.length){const l=[];if(ex.ma)l.push('Durchschnitte');if(ex.rsi)l.push('RSI');
+       if(ex.v)l.push('Volumen');if(l.length)m+=' \u00b7 mitgelesen: '+l.join(', ');}
+     if(bad.length)m+=(u.length?' \u00b7 ':'')+'Nicht gelesen \u2013 '+bad.join('; ');
+     say(m,bad.length&&!ok.length);});
+};
+function pack(){
+  const p=[];PX.forEach((v,k)=>p.push({n:k,r:v.rows.map(r=>[r.d,+r.c.toFixed(4),r.v,r.rsi,r.m50,r.m200])}));
+  return {v:1,cfg:CFG,sel:SEL,tab:TAB,px:p,tr:TR};
+}
+function unpack(o){
+  PX=new Map();
+  (o.px||[]).forEach(x=>PX.set(x.n,{_key:x.n,rows:(x.r||[]).map(p=>({d:p[0],c:p[1],
+    v:p[2]==null?null:p[2],rsi:p[3]==null?null:p[3],m50:p[4]==null?null:p[4],
+    m200:p[5]==null?null:p[5]}))}));
+  TR=o.tr||[];
+  if(o.cfg)CFG=Object.assign(CFG,o.cfg);
+  SEL=o.sel&&PX.has(o.sel)?o.sel:null;TAB=o.tab==='B'?'B':'A';VIEW=null;CACHE.clear();
+  $('cAmount').value=CFG.amount;$('cDepot').value=CFG.depot==null?'':CFG.depot;
+  $('cSparDate').value=CFG.sparDate||'';$('cStopK').value=CFG.stopK;
+  $('cThresh').value=CFG.thresh;$('cTimeMin').value=CFG.timeMin;
+  $('cFeeBase').value=CFG.feeBase;$('cFeePct').value=CFG.feePct;
+  $('cFeeCap').value=CFG.feeCap;$('cSparPct').value=CFG.sparPct;
+}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(pack()));}
+  catch(e){say('Speichern fehlgeschlagen \u2013 Speicher voll?',true);}}
+$('bSave').onclick=()=>{
+  const b=new Blob([JSON.stringify(pack())],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(b);
+  a.download='dreiklang-'+today()+'.json';a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href),4000);say('Gesichert.');
+};
+$('bLoad').onclick=()=>{
+  if((PX.size||TR.length)&&!confirm('Der geladene Stand ersetzt alles, was gerade offen ist. Weiter?'))return;
+  $('fJson').click();
+};
+$('fJson').onchange=function(){
+  const f=this.files[0];this.value='';if(!f)return;
+  readText(f).then(t=>{unpack(JSON.parse(t));save();render();say('Geladen.');})
+             .catch(e=>say('Nicht geladen: '+e.message,true));
+};
+$('bPrompt').onclick=function(){
+  const e=PX.get(SEL);if(!e)return;
+  const D=ind(e),s=scoreNow(e),tg=targets(e),sp=stopPlan(e);
+  const L=['TITEL: '+SEL,'Stand '+fmtD(D.ts[D.n-1])+', Kurs '+nf2.format(s.px)+' EUR','',
+   'CHARTLAGE (rein technisch)',
+   '  Trend '+nf.format(s.trend)+'/10 - '+s.phase,
+   '  Timing '+nf.format(s.timing)+'/10 - '+s.tlab,
+   '  Kurs zur 200er '+sgn(s.d200)+' %, zur 50er '+sgn(s.d50)+' %, 50er zur 200er '+sgn(s.spread)+' %'];
+  if(s.rsi!=null)L.push('  RSI '+nf.format(s.rsi));
+  if(s.vRatio!=null)L.push('  Volumen '+nf2.format(s.vRatio)+'-fach des 50-Tage-Schnitts');
+  L.push('  Schwankung '+nf.format(s.vol)+' % p.a.');
+  L.push('  Letzte Kreuzung: '+(s.cross?(s.cross.type==='golden'?'Golden Cross':'Death Cross')
+    +' vor '+(D.n-1-s.cross.i)+' Handelstagen':'keine'));
+  L.push('','POTENZIAL');
+  L.push('  Bis zum Hoch der letzten 2 Jahre: '+sgn(s.toHigh)+' % (bei '+nf2.format(s.hi)+' EUR)');
+  if(tg&&tg.t1)L.push('  Naechstes Ziel ('+tg.t1n+'): '+nf2.format(tg.t1)+' EUR = '+sgn(tg.t1p)+' %');
+  if(sp){L.push('','PLAN');
+    L.push('  Einsatz '+nf0.format(CFG.amount)+' EUR, Gebuehren hin und zurueck '
+      +nf.format(roundTripPct(CFG.amount))+' %');
+    L.push('  Stop '+nf2.format(sp.level)+' EUR ('+nf.format(sp.dist)+' % Abstand)');}
+  L.push('','AUFGABE','Alles oben stammt aus dem Kursverlauf. Pruefe die Sache dahinter:',
+   '1. Was ist bei diesem Unternehmen zuletzt passiert - warum sieht der Chart so aus?',
+   '2. Traegt die Bewegung fundamental, oder ist es eine technische Gegenbewegung?',
+   '3. Welche Termine stehen in den naechsten Wochen an (Quartalszahlen, Kapitalmarkttag,',
+   '   Hauptversammlung, Produktzyklus, Regulierung)?',
+   '4. Was spricht konkret gegen den Titel? Nenne die stichhaltigsten Gegenargumente.',
+   '5. Ist ein Kursziel in dieser Groessenordnung aus der Sache heraus plausibel?',
+   'Sag klar, wo die Chartlage in die Irre fuehren kann. Keine Anlageberatung.');
+  const txt=L.join('\n'), done=()=>say('Text kopiert \u2013 in den Chat einf\u00fcgen.');
+  if(navigator.clipboard&&navigator.clipboard.writeText)
+    navigator.clipboard.writeText(txt).then(done,()=>fb(txt));else fb(txt);
+  function fb(t){const ta=document.createElement('textarea');ta.value=t;
+    ta.style.position='fixed';ta.style.opacity='0';document.body.appendChild(ta);ta.select();
+    try{document.execCommand('copy');done();}
+    catch(e){say('Kopieren nicht m\u00f6glich \u2013 Text in der Konsole.',true);console.log(t);}
+    document.body.removeChild(ta);}
+};
+window.onerror=m=>say('Fehler: '+m,true);
+(function(){try{const r=localStorage.getItem(KEY);if(r)unpack(JSON.parse(r));}catch(e){}render();})();
+</script>
+</body>
+</html>
