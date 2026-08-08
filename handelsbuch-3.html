@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#12161F">
+<title>Handelsbuch</title>
+<style>
+:root{
+  --ink:#12161F; --panel:#1A2029; --panel2:#212936; --rule:#2A3341;
+  --tx:#E6EAF2; --mut:#8A94A6; --pass:#4ED8A0; --fail:#F2637E; --bar:#F0B429;
+  --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,monospace;
+  --sans:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{background:var(--ink);color:var(--tx);font-family:var(--sans);font-size:15px;line-height:1.5;
+  -webkit-text-size-adjust:100%;padding:0 14px calc(40px + env(safe-area-inset-bottom))}
+.wrap{max-width:680px;margin:0 auto}
+header{padding:22px 0 14px;border-bottom:1px solid var(--rule)}
+.eyebrow{font-family:var(--mono);font-size:10.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--mut)}
+h1{font-size:20px;line-height:1.2;margin:2px 0 0;font-weight:650;letter-spacing:-.01em}
+header p{margin:8px 0 0;color:var(--mut);font-size:13px}
+
+.card{background:var(--panel);border:1px solid var(--rule);border-radius:13px;padding:15px;margin:14px 0}
+h4{margin:0 0 10px;font-family:var(--mono);font-size:10px;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--mut);font-weight:600}
+.kv{font-family:var(--mono);font-size:12.5px}
+.kv div{display:flex;justify-content:space-between;gap:12px;padding:3px 0;align-items:baseline}
+.kv div>span:last-child{white-space:nowrap;text-align:right}
+.kv .tot{border-top:1px solid var(--rule);margin-top:6px;padding-top:7px;font-weight:600}
+.pass{color:var(--pass)} .fail{color:var(--fail)} .dim{color:var(--mut)} .gold{color:var(--bar)}
+.sub{font-family:var(--mono);font-size:11.5px;color:var(--mut);margin-top:6px;line-height:1.5}
+
+.pos{border:1px solid var(--rule);border-radius:11px;padding:13px;margin-bottom:11px;background:var(--panel2)}
+.pos:last-child{margin-bottom:0}
+.pos .top{display:flex;justify-content:space-between;gap:10px;align-items:baseline}
+.pos .nm{font-weight:650;font-size:16px}
+.pos .pl{font-family:var(--mono);font-size:20px;font-weight:600}
+.spark{margin:10px 0 2px;height:46px}
+.spark svg{display:block;width:100%;height:46px}
+
+.fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px}
+label.f{display:block;font-family:var(--mono);font-size:10px;letter-spacing:.12em;
+  text-transform:uppercase;color:var(--mut);margin-bottom:4px}
+input,textarea,select{width:100%;background:var(--ink);color:var(--tx);border:1px solid var(--rule);
+  border-radius:8px;padding:8px 9px;font-family:var(--mono);font-size:14px}
+textarea{font-family:var(--sans);min-height:66px;resize:vertical}
+input:focus,textarea:focus,select:focus{outline:2px solid var(--bar);outline-offset:1px}
+
+.flag{margin-top:11px;padding:10px 12px;border-radius:9px;font-size:12.5px;line-height:1.5}
+.flag.warn{background:rgba(240,180,41,.10);border:1px solid rgba(240,180,41,.35);color:#F5D48A}
+.flag.bad{background:rgba(242,99,126,.10);border:1px solid rgba(242,99,126,.35);color:#F7A9BA}
+.flag.good{background:rgba(78,216,160,.09);border:1px solid rgba(78,216,160,.32);color:#9BE9C8}
+
+.bar{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0 0}
+button{font:inherit;font-size:13.5px;background:var(--panel2);color:var(--tx);
+  border:1px solid var(--rule);border-radius:9px;padding:9px 13px;cursor:pointer}
+button.go{background:var(--bar);border-color:var(--bar);color:#1B1403;font-weight:650}
+button.mini{font-size:12px;padding:6px 10px}
+@media(hover:hover){button:hover{border-color:var(--mut)}button.go:hover{filter:brightness(1.07)}}
+button:focus-visible{outline:2px solid var(--bar);outline-offset:2px}
+.msg{margin-top:9px;font-size:12.5px;color:var(--mut);min-height:1.2em}
+.msg.bad{color:var(--fail)}
+details.card{padding:0}
+details.card>summary{list-style:none;cursor:pointer;padding:14px 15px;font-family:var(--mono);
+  font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--mut);font-weight:600;
+  display:flex;justify-content:space-between}
+details.card>summary::-webkit-details-marker{display:none}
+details.card>summary::after{content:"+";font-size:15px;letter-spacing:0}
+details.card[open]>summary::after{content:"\2013"}
+details.card .inner{padding:0 15px 15px}
+.done{font-family:var(--mono);font-size:12px;border-bottom:1px solid var(--rule);padding:8px 0}
+.done:last-child{border-bottom:0}
+.done .r1{display:flex;justify-content:space-between;gap:10px}
+.done .r2{color:var(--mut);font-size:11px;margin-top:2px}
+footer{margin-top:24px;padding-top:13px;border-top:1px solid var(--rule);font-size:12px;color:var(--mut)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <div class="eyebrow">Handelsbuch</div>
+  <h1>Was du erwartet hast, und was gekommen ist</h1>
+  <p>Vor dem Kauf notieren, nach dem Verkauf vergleichen. Nach genug Trades wei&szlig;t du,
+     ob dein Urteil etwas beitr&auml;gt.</p>
+</header>
+
+<div class="bar">
+  <button class="go" id="bNew">Neue Position</button>
+  <button id="bCsv">Kursdatei laden</button>
+  <button id="bSave">Sichern</button>
+  <button id="bLoad">Laden</button>
+</div>
+<div class="msg" id="msg"></div>
+
+<div id="form"></div>
+<div id="open"></div>
+<div id="review"></div>
+<div id="closed"></div>
+
+<footer>
+  Alles bleibt im Browser. Steuer pauschal mit 26,375&thinsp;% auf den Gewinn gerechnet,
+  ohne Sparerpauschbetrag &ndash; f&uuml;r die echte Abrechnung gilt deine Steuerbescheinigung.
+  Keine Anlageberatung.
+</footer>
+</div>
+
+<input type="file" id="fCsv" accept=".csv" multiple hidden>
+<input type="file" id="fJson" accept=".json" hidden>
+
+<script>
+const KEY='handelsbuch_v1';
+const TAX=0.26375, FEE={base:4.90,pct:0.25,cap:69.90};
+let TR=[];              /* Trades */
+let PX=new Map();       /* Titel -> {ts:[],c:[],m200:[]} */
+let FORM=false;
+let STOPTOUCHED=false;   /* hat der Nutzer das Stop-Feld selbst angefasst? */
+
+const nf=new Intl.NumberFormat('de-DE',{minimumFractionDigits:1,maximumFractionDigits:1});
+const nf2=new Intl.NumberFormat('de-DE',{minimumFractionDigits:2,maximumFractionDigits:2});
+const nf0=new Intl.NumberFormat('de-DE',{maximumFractionDigits:0});
+const eur=v=>v==null?'\u2013':nf2.format(v)+'\u2009\u20AC';
+const sgn=v=>v==null?'\u2013':(v>=0?'+':'\u2212')+nf.format(Math.abs(v));
+const esc=s=>String(s==null?'':s).replace(/[<>&"]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c]));
+const $=id=>document.getElementById(id);
+const val=id=>{const e=$(id);return e?e.value:'';};
+const numOf=v=>{const x=parseFloat(String(v).replace(',','.'));return isNaN(x)?null:x;};
+function say(t,bad){const m=$('msg');m.textContent=t||'';m.classList.toggle('bad',!!bad);}
+const fee=a=>a<=0?0:Math.min(FEE.base+a*FEE.pct/100,FEE.cap);
+const today=()=>{const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')
+  +'-'+String(d.getDate()).padStart(2,'0');};
+const tsOf=s=>{let m=String(s).match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})/);
+  if(m)return Date.UTC(+m[3],+m[2]-1,+m[1]);
+  m=String(s).match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+  return m?Date.UTC(+m[1],+m[2]-1,+m[3]):NaN;};
+const fmtD=t=>{const d=new Date(t);return String(d.getUTCDate()).padStart(2,'0')+'.'
+  +String(d.getUTCMonth()+1).padStart(2,'0')+'.'+d.getUTCFullYear();};
+
+/* ---------- Abrechnung eines Trades ---------- */
+function settle(t,exitPx){
+  const stk=t.amount/t.entry;
+  const erloes=stk*exitPx;
+  const fk=fee(t.amount), fv=fee(erloes);
+  const roh=erloes-t.amount;
+  const steuer=Math.max(0,roh-fk-fv)*TAX;
+  const netto=roh-fk-fv-steuer;
+  return {stk,erloes,fk,fv,roh,steuer,netto,pct:netto/t.amount*100,brutto:(exitPx/t.entry-1)*100};
+}
+
+/* ---------- Kursdaten ---------- */
+function sma(c,n){const o=new Array(c.length).fill(null);let s=0;
+  for(let i=0;i<c.length;i++){s+=c[i];if(i>=n)s-=c[i-n];if(i>=n-1)o[i]=s/n;}return o;}
+function volOf(c){
+  const r=[];for(let i=Math.max(1,c.length-120);i<c.length;i++){
+    if(c[i-1]>0&&c[i]>0)r.push(Math.log(c[i]/c[i-1]));}
+  if(r.length<20)return null;
+  const m=r.reduce((a,b)=>a+b,0)/r.length;
+  return Math.sqrt(r.reduce((s,x)=>s+(x-m)*(x-m),0)/r.length)*Math.sqrt(252)*100;
+}
+function parseCSV(text){
+  const L=text.split(/\r?\n/).filter(l=>l.trim()&&!/^sep=/i.test(l));
+  if(L.length<2)throw new Error('Datei leer');
+  const h=L[0].split(';');
+  const name=h[1].replace(/\s*\((EUR|USD)\)/i,'').trim()||'Ohne Namen';
+  const i200=h.findIndex(x=>/durchschnitt\s*200/i.test(x));
+  const num=x=>{x=(x||'').trim().replace(/\./g,'').replace(',','.');const v=parseFloat(x);return isNaN(v)?null:v;};
+  const ts=[],c=[],m=[];
+  for(let i=1;i<L.length;i++){const q=L[i].split(';');if(q.length<2)continue;
+    const cl=num(q[1]);if(!(cl>0))continue;
+    const t=tsOf(q[0]);if(isNaN(t))continue;
+    ts.push(t);c.push(cl);m.push(i200>0?num(q[i200]):null);}
+  if(!c.length)throw new Error('keine Kurse');
+  const own=sma(c,200);
+  return {name,ts,c,m200:m.some(x=>x!=null)?m.map((x,i)=>x==null?own[i]:x):own};
+}
+function lastOf(name){
+  const p=PX.get(name); if(!p)return null;
+  const i=p.c.length-1;
+  return {px:p.c[i],ts:p.ts[i],m200:p.m200[i],vol:volOf(p.c)};
+}
+function sparkSVG(name,fromTs){
+  const p=PX.get(name); if(!p||p.c.length<5)return '';
+  let i0=0; if(fromTs){while(i0<p.ts.length-2&&p.ts[i0]<fromTs)i0++; i0=Math.max(0,i0-20);}
+  else i0=Math.max(0,p.c.length-260);
+  const W=600,H=46,n=p.c.length;
+  let lo=Infinity,hi=-Infinity;
+  for(let i=i0;i<n;i++){for(const v of [p.c[i],p.m200[i]]){if(v==null)continue;if(v<lo)lo=v;if(v>hi)hi=v;}}
+  if(!(hi>lo))return '';
+  const X=i=>((i-i0)/(n-1-i0))*W, Y=v=>H-2-((v-lo)/(hi-lo))*(H-4);
+  const step=Math.max(1,Math.ceil((n-i0)/400));
+  const line=(arr,col,w,dash)=>{const pts=[];
+    for(let i=i0;i<n;i+=step){if(arr[i]==null)continue;pts.push(X(i).toFixed(1)+','+Y(arr[i]).toFixed(1));}
+    if(arr[n-1]!=null)pts.push(X(n-1).toFixed(1)+','+Y(arr[n-1]).toFixed(1));
+    return pts.length>1?'<polyline fill="none" stroke="'+col+'" stroke-width="'+w+'"'
+      +(dash?' stroke-dasharray="'+dash+'"':'')+' points="'+pts.join(' ')+'"/>':'';};
+  return '<div class="spark"><svg viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="none">'
+    + line(p.m200,'#6C7A90',1.2,'4 3')
+    + line(p.c,'#E6EAF2',1.6,'')+'</svg></div>';
+}
+
+/* ---------- Formular ---------- */
+function formHTML(){
+  const names=Array.from(PX.keys());
+  return '<div class="card"><h4>Neue Position</h4>'
+   + '<div class="fields">'
+   +   '<div><label class="f" for="nName">Titel</label>'
+   +     (names.length? '<input list="nl" id="nName" placeholder="Name"><datalist id="nl">'
+        +names.map(n=>'<option value="'+esc(n)+'">').join('')+'</datalist>'
+        : '<input id="nName" placeholder="Name">')+'</div>'
+   +   '<div><label class="f" for="nPx">Kaufkurs (&euro;)</label><input id="nPx" inputmode="decimal"></div>'
+   +   '<div><label class="f" for="nAmt">Einsatz (&euro;)</label><input id="nAmt" inputmode="decimal" value="1000"></div>'
+   +   '<div><label class="f" for="nDate">Kaufdatum</label><input id="nDate" type="date" value="'+today()+'"></div>'
+   +   '<div><label class="f" for="nTgt">Dein Kursziel (&euro;)</label><input id="nTgt" inputmode="decimal"></div>'
+   +   '<div><label class="f" for="nWk">In wie vielen Wochen</label><input id="nWk" inputmode="numeric" value="12"></div>'
+   +   '<div><label class="f" for="nStop">Stop (% unter Kauf)</label>'
+   +     '<input id="nStop" inputmode="decimal"></div>'
+   +   '<div><label class="f" for="nConf">Wie sicher bist du?</label><select id="nConf">'
+   +     '<option value="1">1 &ndash; Versuch</option><option value="2">2</option>'
+   +     '<option value="3" selected>3 &ndash; mittel</option><option value="4">4</option>'
+   +     '<option value="5">5 &ndash; sehr sicher</option></select></div>'
+   + '</div>'
+   + '<div style="margin-top:11px"><label class="f" for="nWhy">Warum kaufst du?</label>'
+   +   '<textarea id="nWhy" placeholder="Die These in eigenen Worten. Was muss passieren, damit es aufgeht?"></textarea></div>'
+   + '<div id="calc"></div>'
+   + '<div class="bar"><button class="go" id="bAdd">Eintragen</button>'
+   +   '<button id="bCancel">Abbrechen</button></div></div>';
+}
+function calcHTML(){
+  const px=numOf(val('nPx')), amt=numOf(val('nAmt')), tgt=numOf(val('nTgt'));
+  const wk=numOf(val('nWk')), name=val('nName').trim();
+  if(!(px>0)||!(amt>0)) return '<div class="sub" style="margin-top:11px">'
+    + 'Kaufkurs und Einsatz eintragen, dann rechne ich vor, was der Trade bringen muss.</div>';
+  const fk=fee(amt), fv=fee(amt), kosten=fk+fv;
+  /* Bruttorendite, damit nach Kosten und Steuer genau null bleibt */
+  const nullPct=(kosten/amt*100)/(1-TAX);
+  const last=name?lastOf(name):null;
+  const vol=last?last.vol:null;
+  let out='<div class="kv" style="margin-top:12px">'
+   + '<div><span>Geb&uuml;hren Kauf + Verkauf</span><span>'+eur(kosten)+'</span></div>'
+   + '<div class="tot"><span>N&ouml;tig, nur um bei null zu landen</span><span class="gold">'
+   +   sgn(nullPct)+'\u2009% \u00b7 '+eur(px*(1+nullPct/100))+'</span></div>';
+  if(tgt>0){
+    const brutto=(tgt/px-1)*100;
+    const stk=amt/px, erl=stk*tgt, roh=erl-amt;
+    const st=Math.max(0,roh-kosten)*TAX;
+    const netto=roh-kosten-st;
+    out+='<div><span>Dein Ziel brutto</span><span>'+sgn(brutto)+'\u2009%</span></div>'
+      + '<div><span>Davon Steuer</span><span>\u2212'+eur(st)+'</span></div>'
+      + '<div class="tot"><span>Bleibt dir</span><span class="'+(netto>=0?'pass':'fail')+'">'
+      +   eur(netto)+' \u00b7 '+sgn(netto/amt*100)+'\u2009%</span></div>';
+    if(wk>0) out+='<div><span>Auf '+nf0.format(wk)+' Wochen entspricht das</span><span>'
+      + sgn(netto/amt*100*(52/wk))+'\u2009% im Jahr</span></div>';
+    out+='</div>';
+    if(brutto<nullPct) out+='<div class="flag bad">Dein Ziel liegt unter der Nulllinie. '
+      + 'Selbst wenn es exakt eintrifft, machst du Verlust.</div>';
+    else if(brutto<nullPct*2) out+='<div class="flag warn">Vom Ziel bleibt nach Kosten und Steuer '
+      + 'weniger als die H&auml;lfte &uuml;brig. Der Trade muss sehr genau aufgehen.</div>';
+  } else out+='</div>';
+  const stopUse=stopPctOf();
+  const stopPx=px*(1-stopUse/100);
+  const verlust=amt*stopUse/100+kosten;
+  const herkunft = STOPTOUCHED ? 'Von dir gesetzt'
+    : vol!=null ? 'Automatisch eingetragen aus der Schwankung des Titels ('+nf.format(vol)
+                  +'\u2009% p.a.) \u2013 du kannst das Feld \u00fcberschreiben'
+    : 'Standardwert, automatisch eingetragen \u2013 ohne Kursdatei kann ich die Schwankung '
+      +'nicht messen, also pr\u00fcf ihn';
+  out+='<div class="kv" style="margin-top:12px">'
+   + '<div><span>Stop bei</span><span class="fail">'+eur(stopPx)+' \u00b7 \u2212'+nf.format(stopUse)+'\u2009%</span></div>'
+   + '<div class="tot"><span>Verlust, wenn er greift</span><span class="fail">\u2212'+eur(verlust)+'</span></div></div>'
+   + '<div class="sub">'+herkunft+'. Ein Stop begrenzt den Schaden, er steigert nicht die Rendite '
+   + '\u2013 und bei einer Er\u00f6ffnungsl\u00fccke bekommst du weniger als das Limit.</div>';
+  return out;
+}
+
+/* ---------- Offene Positionen ---------- */
+function openHTML(){
+  const off=TR.filter(t=>!t.exit);
+  if(!off.length) return '<div class="card"><h4>Offene Positionen</h4>'
+    + '<div class="sub">Nichts offen.</div></div>';
+  return '<div class="card"><h4>Offene Positionen</h4>'+off.map(t=>{
+    const last=lastOf(t.title);
+    const cur=last?last.px:null;
+    const s=cur?settle(t,cur):null;
+    const tage=Math.round((Date.now()-tsOf(t.date))/864e5);
+    let out='<div class="pos"><div class="top"><div>'
+     + '<div class="nm">'+esc(t.title)+'</div>'
+     + '<div class="sub" style="margin-top:2px">'+eur(t.entry)+' am '+fmtD(tsOf(t.date))
+     +   ' \u00b7 '+eur(t.amount)+' \u00b7 seit '+tage+' Tagen</div></div>'
+     + '<div class="pl '+(s?(s.netto>=0?'pass':'fail'):'dim')+'">'
+     +   (s?sgn(s.pct)+'\u2009%':'\u2013')+'</div></div>';
+    if(cur) out+=sparkSVG(t.title,tsOf(t.date));
+    if(s) out+='<div class="kv"><div><span>Kurs heute</span><span>'+eur(cur)+'</span></div>'
+      + '<div><span>Nach Geb&uuml;hren und Steuer</span><span class="'+(s.netto>=0?'pass':'fail')+'">'
+      +   eur(s.netto)+'</span></div></div>';
+    if(t.target) out+='<div class="kv"><div><span>Dein Ziel</span><span>'+eur(t.target)
+      + (cur?' \u00b7 noch '+sgn((t.target/cur-1)*100)+'\u2009%':'')+'</span></div></div>';
+    /* Stop: zieht mit dem hoechsten Kurs seit Kauf mit */
+    if(t.stopPct>0){
+      const p=PX.get(t.title); let peak=t.entry;
+      if(p){const t0=tsOf(t.date);
+        for(let i=0;i<p.c.length;i++) if(p.ts[i]>=t0&&p.c[i]>peak) peak=p.c[i];}
+      const lvl=peak*(1-t.stopPct/100);
+      const drunter=cur!=null&&cur<=lvl;
+      out+='<div class="kv"><div><span>Stop ('+nf.format(t.stopPct)+'\u2009% unter dem Hoch)</span>'
+        + '<span class="'+(drunter?'fail':'')+'">'+eur(lvl)
+        + (peak>t.entry?' \u00b7 nachgezogen von '+eur(peak):'')+'</span></div></div>';
+      if(drunter) out+='<div class="flag bad">Der Kurs steht unter deinem Stop. '
+        + 'Das ist die Regel, die du dir beim Kauf gesetzt hast.</div>';
+    }
+    /* Notausgang: einmal im Monat gegen die 200er pruefen */
+    if(last&&last.m200!=null){
+      const unter=last.px<last.m200;
+      out+='<div class="flag '+(unter?'warn':'good')+'">'
+       + (unter? 'Kurs steht unter der 200-Tage-Linie ('+eur(last.m200)+'). '
+                +'Das ist dein vereinbarter Notausgang \u2013 pr&uuml;f, ob die These noch tr&auml;gt.'
+               : 'Kurs &uuml;ber der 200-Tage-Linie ('+eur(last.m200)+'). Kein Notausgangssignal.')
+       + '</div>';
+    }
+    if(t.why) out+='<div class="sub" style="margin-top:9px;color:var(--tx)">'+esc(t.why)+'</div>';
+    out+='<div class="bar"><button class="mini" data-sell="'+t.id+'">Verkauft</button>'
+      + '<button class="mini" data-del="'+t.id+'">L&ouml;schen</button></div></div>';
+    return out;
+  }).join('')+'</div>';
+}
+
+/* ---------- Auswertung ---------- */
+function reviewHTML(){
+  const zu=TR.filter(t=>t.exit);
+  if(!zu.length) return '';
+  const rows=zu.map(t=>{
+    const s=settle(t,t.exit);
+    const zielPct=t.target?(t.target/t.entry-1)*100:null;
+    return {t,s,zielPct,istPct:s.brutto,
+      zielErreicht:t.target?(t.exit>=t.target):null};
+  });
+  const n=rows.length;
+  const plus=rows.filter(r=>r.s.netto>0).length;
+  const netSum=rows.reduce((a,r)=>a+r.s.netto,0);
+  const kosten=rows.reduce((a,r)=>a+r.s.fk+r.s.fv,0);
+  const steuer=rows.reduce((a,r)=>a+r.s.steuer,0);
+  const mitZiel=rows.filter(r=>r.zielPct!=null);
+  const erreicht=mitZiel.filter(r=>r.zielErreicht).length;
+  const mZiel=mitZiel.length?mitZiel.reduce((a,r)=>a+r.zielPct,0)/mitZiel.length:null;
+  const mIst =mitZiel.length?mitZiel.reduce((a,r)=>a+r.istPct,0)/mitZiel.length:null;
+
+  let out='<div class="card"><h4>Deine Bilanz</h4><div class="kv">'
+   + '<div><span>Abgeschlossene Trades</span><span>'+n+'</span></div>'
+   + '<div><span>Davon im Plus</span><span class="'+(plus/n>=0.5?'pass':'fail')+'">'
+   +   nf0.format(plus/n*100)+'\u2009% ('+plus+' von '+n+')</span></div>'
+   + '<div><span>Geb&uuml;hren gezahlt</span><span>\u2212'+eur(kosten)+'</span></div>'
+   + '<div><span>Steuer realisiert</span><span>\u2212'+eur(steuer)+'</span></div>'
+   + '<div class="tot"><span>Unterm Strich</span><span class="'+(netSum>=0?'pass':'fail')+'">'
+   +   eur(netSum)+'</span></div></div>';
+
+  if(mitZiel.length){
+    out+='<div class="kv" style="margin-top:12px">'
+     + '<div><span>Kursziel erreicht</span><span>'+nf0.format(erreicht/mitZiel.length*100)
+     +   '\u2009% ('+erreicht+' von '+mitZiel.length+')</span></div>'
+     + '<div><span>Im Schnitt erwartet</span><span>'+sgn(mZiel)+'\u2009%</span></div>'
+     + '<div class="tot"><span>Im Schnitt eingetreten</span><span class="'
+     +   (mIst>=mZiel?'pass':'fail')+'">'+sgn(mIst)+'\u2009%</span></div></div>';
+    const bias=mIst-mZiel;
+    out+='<div class="flag '+(Math.abs(bias)<3?'good':'warn')+'">'
+     + (bias<-3? 'Du liegst im Schnitt '+nf.format(-bias)+' Punkte &uuml;ber dem, was eintritt \u2013 '
+                +'du sch&auml;tzt systematisch zu optimistisch. Zieh k&uuml;nftig etwa so viel von deinen Zielen ab.'
+       : bias>3? 'Du liegst im Schnitt '+nf.format(bias)+' Punkte unter dem, was eintritt \u2013 '
+                +'du untersch&auml;tzt dich.'
+       : 'Deine Sch&auml;tzungen treffen im Mittel ganz gut.')
+     + '</div>';
+  }
+
+  /* Sagt deine Sicherheit etwas aus? */
+  const hoch=rows.filter(r=>r.t.conf>=4), tief=rows.filter(r=>r.t.conf<=2);
+  if(hoch.length>=3&&tief.length>=3){
+    const mh=hoch.reduce((a,r)=>a+r.s.pct,0)/hoch.length;
+    const mt=tief.reduce((a,r)=>a+r.s.pct,0)/tief.length;
+    out+='<div class="kv" style="margin-top:12px">'
+     + '<div><span>Trades mit hoher Sicherheit (4\u20135)</span><span>'+sgn(mh)+'\u2009% \u00b7 '+hoch.length+' St&uuml;ck</span></div>'
+     + '<div class="tot"><span>Mit niedriger (1\u20132)</span><span>'+sgn(mt)+'\u2009% \u00b7 '+tief.length+' St&uuml;ck</span></div></div>'
+     + '<div class="sub">'+(mh>mt? 'Deine sicheren Trades liefen besser als deine unsicheren. '
+        +'Das ist das erste Anzeichen, dass dein Urteil etwas tr&auml;gt.'
+        : 'Deine sicheren Trades liefen nicht besser als die unsicheren. '
+        +'Deine Sicherheit sagt bisher nichts &uuml;ber den Ausgang.')+'</div>';
+  }
+
+  /* Ehrlicher Hinweis auf die Stichprobe */
+  const fehlt=Math.max(0,20-n);
+  out+='<div class="flag '+(n>=20?'good':'warn')+'">'
+   + (n>=20? 'Ab hier werden die Zahlen langsam aussagekr&auml;ftig \u2013 aber auch 20 Trades sind wenig. '
+            +'Ein einzelner gro&szlig;er Treffer kann die Bilanz allein tragen, schau also nicht nur auf die Summe.'
+     : 'Noch '+fehlt+' Trades, bis diese Zahlen mehr sind als Zufall. Bis dahin ist die Bilanz eine '
+       +'Notiz, kein Urteil \u2013 bei so wenigen F&auml;llen entscheidet das Gl&uuml;ck.')
+   + '</div></div>';
+  return out;
+}
+function closedHTML(){
+  const zu=TR.filter(t=>t.exit);
+  if(!zu.length) return '';
+  return '<details class="card"><summary>Abgeschlossene Trades ('+zu.length+')</summary><div class="inner">'
+   + zu.slice().reverse().map(t=>{
+      const s=settle(t,t.exit);
+      return '<div class="done"><div class="r1"><span>'+esc(t.title)+'</span>'
+       + '<span class="'+(s.netto>=0?'pass':'fail')+'">'+sgn(s.pct)+'\u2009% \u00b7 '+eur(s.netto)+'</span></div>'
+       + '<div class="r2">'+eur(t.entry)+' \u2192 '+eur(t.exit)+' \u00b7 '+fmtD(tsOf(t.date))
+       +   ' bis '+fmtD(tsOf(t.exitDate))
+       +   (t.target?' \u00b7 Ziel war '+eur(t.target):'')
+       +   ' \u00b7 Sicherheit '+t.conf+'</div>'
+       + (t.why?'<div class="r2" style="color:var(--tx)">'+esc(t.why)+'</div>':'')
+       + '<div class="bar"><button class="mini" data-del="'+t.id+'">L&ouml;schen</button></div></div>';
+   }).join('')+'</div></details>';
+}
+
+/* ---------- Zeichnen ---------- */
+function render(){
+  $('form').innerHTML=FORM?formHTML():'';
+  $('open').innerHTML=openHTML();
+  $('review').innerHTML=reviewHTML();
+  $('closed').innerHTML=closedHTML();
+  if(FORM){syncStop();$('calc').innerHTML=calcHTML();}
+  bind();
+}
+function bind(){
+  const recalc=()=>{const c=$('calc');if(c)c.innerHTML=calcHTML();};
+  ['nPx','nAmt','nTgt','nWk'].forEach(id=>{const e=$(id);if(e)e.oninput=recalc;});
+  const nn=$('nName'); if(nn)nn.oninput=()=>{syncStop();recalc();};
+  const ns=$('nStop'); if(ns)ns.oninput=()=>{STOPTOUCHED=true;recalc();};
+  const a=$('bAdd'); if(a)a.onclick=addTrade;
+  const c=$('bCancel'); if(c)c.onclick=()=>{FORM=false;render();};
+  document.querySelectorAll('[data-sell]').forEach(b=>b.onclick=function(){
+    const t=TR.find(x=>x.id===this.dataset.sell); if(!t)return;
+    const last=lastOf(t.title);
+    const v=window.prompt('Zu welchem Kurs verkauft?',last?nf2.format(last.px):'');
+    if(v===null)return;
+    const px=numOf(v); if(!(px>0)){say('Kurs nicht erkannt',true);return;}
+    const d=window.prompt('Verkaufsdatum (JJJJ-MM-TT)',today());
+    if(d===null)return;
+    t.exit=px; t.exitDate=d||today(); save(); render();
+  });
+  document.querySelectorAll('[data-del]').forEach(b=>b.onclick=function(){
+    const t=TR.find(x=>x.id===this.dataset.del); if(!t)return;
+    if(!confirm('"'+t.title+'" l\u00f6schen?'))return;
+    TR=TR.filter(x=>x.id!==t.id); save(); render();
+  });
+}
+/* Vorschlag aus der Schwankung, sonst ein neutraler Standardwert */
+function suggestStop(){
+  const last=lastOf(val('nName').trim());
+  const v=last?last.vol:null;
+  return v!=null?Math.max(10,Math.min(30,0.8*v)):15;
+}
+/* Solange du das Feld nicht selbst angefasst hast, schreibe ich den Vorschlag hinein */
+function syncStop(){
+  if(STOPTOUCHED)return;
+  const e=$('nStop'); if(e)e.value=nf.format(suggestStop());
+}
+function stopPctOf(){
+  const set=numOf(val('nStop'));
+  return set>0?set:suggestStop();
+}
+function addTrade(){
+  const title=val('nName').trim(), px=numOf(val('nPx')), amt=numOf(val('nAmt'));
+  if(!title){say('Titel fehlt',true);return;}
+  if(!(px>0)||!(amt>0)){say('Kaufkurs und Einsatz pr\u00fcfen',true);return;}
+  TR.push({id:String(Date.now()),title,entry:px,amount:amt,date:val('nDate')||today(),
+    target:numOf(val('nTgt')),weeks:numOf(val('nWk')),conf:parseInt(val('nConf'),10)||3,stopPct:stopPctOf(),
+    why:val('nWhy').trim(),exit:null,exitDate:null});
+  FORM=false; save(); render(); say('Eingetragen.');
+}
+
+/* ---------- Speichern ---------- */
+function pack(){
+  const p=[];
+  PX.forEach((v,k)=>p.push({n:k,ts:v.ts,c:v.c,m:v.m200}));
+  return {v:1,tr:TR,px:p};
+}
+function unpack(o){
+  TR=o.tr||[]; PX=new Map();
+  (o.px||[]).forEach(x=>PX.set(x.n,{ts:x.ts,c:x.c,m200:x.m}));
+}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(pack()));}
+  catch(e){say('Speichern fehlgeschlagen \u2013 Speicher voll?',true);}}
+
+$('bNew').onclick=()=>{FORM=!FORM;if(FORM)STOPTOUCHED=false;render();};
+$('bCsv').onclick=()=>$('fCsv').click();
+$('fCsv').onchange=function(){
+  const fs=Array.prototype.slice.call(this.files); this.value='';
+  if(!fs.length)return;
+  Promise.all(fs.map(f=>f.text().then(t=>({t})).catch(()=>({err:f.name}))))
+   .then(res=>{
+     const ok=[],bad=[];
+     res.forEach(x=>{ if(x.err){bad.push(x.err);return;}
+       try{const p=parseCSV(x.t);PX.set(p.name,{ts:p.ts,c:p.c,m200:p.m200});ok.push(p.name);}
+       catch(e){bad.push(e.message);} });
+     save(); render();
+     say((ok.length?'Kurse geladen: '+ok.join(', '):'')+(bad.length?' \u00b7 Fehler: '+bad.join('; '):''),
+       bad.length&&!ok.length);
+   });
+};
+$('bSave').onclick=()=>{
+  const b=new Blob([JSON.stringify(pack())],{type:'application/json'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(b); a.download='handelsbuch-'+today()+'.json'; a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href),4000); say('Gesichert.');
+};
+$('bLoad').onclick=()=>{
+  if(TR.length&&!confirm('Der geladene Stand ersetzt deine '+TR.length+' Eintr\u00e4ge. Weiter?'))return;
+  $('fJson').click();
+};
+$('fJson').onchange=function(){
+  const f=this.files[0]; this.value=''; if(!f)return;
+  f.text().then(t=>{unpack(JSON.parse(t));save();render();say('Geladen.');})
+          .catch(e=>say('Nicht geladen: '+e.message,true));
+};
+window.onerror=m=>say('Fehler: '+m,true);
+(function(){try{const r=localStorage.getItem(KEY);if(r)unpack(JSON.parse(r));}catch(e){}render();})();
+</script>
+</body>
+</html>
