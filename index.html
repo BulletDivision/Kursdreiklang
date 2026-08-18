@@ -465,8 +465,18 @@ function scoreAt(D,i){
   const spread=(D.m50[i]/D.m200[i]-1)*100;
   const s50=slope(D.m50,i,20),s200=slope(D.m200,i,20),cross=D.lastCross[i],th=Math.tanh;
   let fresh=0; if(cross)fresh=(cross.type==='golden'?1:-1)*Math.exp(-(i-cross.i)/70);
-  const trend=clamp((0.30*th(spread/8)+0.24*th(d200/12)
+  /* Groesster Tagessprung der letzten 20 Tage - ein Gap ist kein Trend. */
+  let gap=0,gapI=null;
+  for(let k=Math.max(1,i-19);k<=i;k++){
+    if(!(D.c[k-1]>0))continue;
+    const mv=(D.c[k]/D.c[k-1]-1)*100;
+    if(Math.abs(mv)>Math.abs(gap)){gap=mv;gapI=k;}}
+  const gapAge=gapI==null?null:i-gapI;
+  /* Abstand zur 200er ueber 25 % ist nicht mehr Trend, sondern Dehnung. */
+  const ext=Math.max(0,d200-25), extPen=th(ext/25);
+  const trendRaw=clamp((0.30*th(spread/8)+0.24*th(d200/12)
     +0.22*(s50==null?0:th(s50/6))+0.10*(s200==null?0:th(s200/4))+0.14*fresh+1)*5,0,10);
+  const trend=clamp(trendRaw-1.8*extPen-(Math.abs(gap)>12?0.8:0),0,10);
   let hi=px; for(let k=Math.max(0,i-500);k<=i;k++)if(D.c[k]>hi)hi=D.c[k];
   const toHigh=(hi/px-1)*100, potential=toHigh<=0?0:Math.min(60,toHigh*0.55);
   const vola=D.vol[i]||25, z=d50/(vola*Math.sqrt(50/252)), rsi=D.rsi[i];
@@ -474,7 +484,10 @@ function scoreAt(D,i){
   const timing=clamp(5*(1+0.55*rc+0.45*(-th(z))),0,10);
   const vRatio=(D.v[i]!=null&&D.vAvg[i])?D.v[i]/D.vAvg[i]:null;
   let phase;
-  if(spread>0&&d200>0&&(s50||0)>0)     phase='Aufw\u00e4rts best\u00e4tigt';
+  if(Math.abs(gap)>12&&gapAge<=15&&gap>0) phase='Sprung, noch kein Trend';
+  else if(ext>0&&spread<0)             phase='Weit \u00fcber der 200er, Trend unbest\u00e4tigt';
+  else if(ext>0)                       phase='Aufw\u00e4rts, \u00fcberdehnt';
+  else if(spread>0&&d200>0&&(s50||0)>0)phase='Aufw\u00e4rts best\u00e4tigt';
   else if(spread<0&&(s50||0)>0&&d50>0) phase='Bodenbildung, dreht';
   else if(spread>0&&(s50||0)<0)        phase='Aufw\u00e4rts, verliert Schwung';
   else if(spread<0&&(s50||0)<0)        phase='Abw\u00e4rts';
@@ -482,7 +495,7 @@ function scoreAt(D,i){
   const tlab=timing>=7?'Ruhig, nicht \u00fcberdehnt':timing>=4?'Neutral':
              timing>=2?'Schon gelaufen':'Hei\u00df gelaufen';
   return {i,px,d200,d50,spread,s50,cross,vol:vola,trend,timing,z,rsi,vRatio,
-          potential,toHigh,hi,phase,tlab};
+          potential,toHigh,hi,phase,tlab,gap,gapAge,ext};
 }
 const scoreNow=e=>{const D=ind(e);return scoreAt(D,D.n-1);};
 
@@ -584,7 +597,8 @@ function chartHTML(e){
   const box=$('cbox'), W=Math.max(320,box?box.clientWidth:760);
   const H=clamp(Math.round(W*0.62),300,470);
   const PL=8,PR=54,PT=14,PBp=Math.round(H*0.60),RT=Math.round(H*0.70),RB=Math.round(H*0.90);
-  if(!VIEW||VIEW.key!==e._key)VIEW={key:e._key,i0:Math.max(0,D.n-260),i1:D.n-1};
+  if(!VIEW||VIEW.key!==e._key||VIEW.n!==D.n)
+    VIEW={key:e._key,n:D.n,i0:Math.max(0,D.n-260),i1:D.n-1};
   let i0=clamp(Math.round(VIEW.i0),0,D.n-2),i1=clamp(Math.round(VIEW.i1),i0+2,D.n-1);
   VIEW.i0=i0;VIEW.i1=i1;
   let lo=Infinity,hi=-Infinity;
@@ -736,7 +750,7 @@ function viewA(){
    +  '<div class="bignum '+zone(s.trend)+'">'+nf.format(s.trend)+'<small>/ 10</small></div>'
    +  '<div class="seg">'+segs(s.trend)+'</div><div class="lab">'+s.phase+'</div>'
    +  '<div class="sub">Kurs '+sgn(s.d200)+'\u2009% zur 200er \u00b7 50er '+sgn(s.spread)+'\u2009% zur 200er<br>'
-   +  (s.cross?(s.cross.type==='golden'?'Golden Cross':'Death Cross')+' vor '+(D.n-1-s.cross.i)+' Tagen'
+   +  (s.cross?(s.cross.type==='golden'?'Golden Cross':'Death Cross')+' vor '+(D.n-1-s.cross.i)+' Handelstagen'
       :'keine Kreuzung')+'</div></div>'
    +'<div class="gauge"><div class="eyebrow">Timing '
    +  '<button class="info" data-info="timing" aria-label="Erkl\u00e4rung">i</button></div>'
@@ -750,6 +764,14 @@ function viewA(){
     out+='<div class="flag '+(st.netto>=0?'good':'warn')+'">Du h\u00e4ltst diesen Titel seit '
      +fmtD(tsOfStr(op.date))+': '+eur(op.entry)+' \u2192 '+eur(s.px)+', nach Kosten und Steuer '
      +sgn(st.pct)+'\u2009%. Details im Handelsbuch.</div>';}
+  if(Math.abs(s.gap)>12&&s.gapAge<=15)
+    out+='<div class="flag warn">Vor '+s.gapAge+' Handelstagen gab es einen Kurssprung von '
+     +sgn(s.gap)+'\u2009%. RSI und Abstand zu den Linien stammen gr\u00f6\u00dftenteils aus '
+     +'diesem einen Tag \u2013 kein Trend \u00fcber Wochen.</div>';
+  if(s.ext>0)
+    out+='<div class="flag warn">Der Kurs steht '+sgn(s.d200)+'\u2009% \u00fcber der 200er. '
+     +'So weit oben ist der R\u00fcckweg zur Linie das gr\u00f6\u00dfere Risiko als das, '
+     +'was oben noch fehlt.</div>';
   if(s.vRatio!=null&&s.vRatio<0.7&&s.d50>0)
     out+='<div class="flag warn">Die Bewegung l\u00e4uft mit '+nf2.format(s.vRatio)
      +'\u00d7 des \u00fcblichen Volumens \u2013 wenig Umsatz, wenig \u00dcberzeugung dahinter.</div>';
@@ -1041,7 +1063,7 @@ function bind(){
     zoomBy(this.dataset.zoom==='in'?0.7:1.4);});
   document.querySelectorAll('[data-span]').forEach(b=>b.onclick=function(){
     const e=PX.get(SEL);if(!e)return;const D=ind(e),sp=parseInt(this.dataset.span,10);
-    VIEW={key:e._key,i0:sp?Math.max(0,D.n-1-sp):0,i1:D.n-1};paintChart();});
+    VIEW={key:e._key,n:D.n,i0:sp?Math.max(0,D.n-1-sp):0,i1:D.n-1};paintChart();});
   const cb=$('cbox');if(cb)chartEvents(cb);
   const nb=$('bNew');if(nb)nb.onclick=()=>{FORM=true;STOPTOUCHED=false;render();};
   const ca=$('bCancel');if(ca)ca.onclick=()=>{FORM=false;render();};
